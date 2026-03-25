@@ -11,9 +11,6 @@ struct Args {
 
     #[arg(short = 'w')]
     wordlist: String,
-
-    #[arg(short = 't')]
-    hash: String,
 }
 
 fn banner() {
@@ -24,7 +21,7 @@ fn banner() {
     println!("{}", r"  |___  /__|  |____/ |__|  \___  >\___  >__|  (____  /___  /\___  >__|".truecolor(222, 74, 31));
     println!("{}", r"      \/                       \/     \/           \/    \/     \/".truecolor(222, 74, 31));
     println!("                                                Author: erikgavs");
-    println!("                                                v0.1.0");
+    println!("                                                v0.2.0");
     println!();
     println!(" [!] DISCLAIMER: This software is provided for ethical hacking and penetration testing");
     println!("     only. You are solely responsible for your actions. Using this tool against targets");
@@ -55,37 +52,16 @@ fn main() -> anyhow::Result<()> {
     // for each word in wordlist, convert it to md5 hash
     // if the hash matches one in hashes.txt, that word is the original text
     for word in wordlist.lines() {
-        if args.hash == "md5" {
-            let hash = format!("{:x}", md5::compute(word));
-            if hashes.contains(&hash.as_str()) {
-                println!(
-                    "\n{} hash cracked {} -> {}\n",
-                    good_star.green(),
-                    hash,
-                    word
-                );
+        let hash = format!("{:x}", md5::compute(word));
+        if hashes.contains(&hash.as_str()) {
+            println!(
+                "\n{} Hash cracked {} -> {}\n",
+                good_star.green(),
+                hash,
+                word.truecolor(227, 120, 49)
+            );
 
-                found += 1;
-            }
-        } else if args.hash == "md5-base64" {
-            let hash = format!("{:x}", md5::compute(word));
-            for h in &hashes {
-                if let Ok(decoded) = base64::decode(h) {
-                    let hex: String = decoded.iter().map(|n| format!("{:02x}", n)).collect();
-
-                    if hex == hash {
-                        println!(
-                            "\n{} hash decoded and cracked {} -> {} -> {}\n",
-                            good_star.green(),
-                            h,
-                            hex,
-                            word
-                        );
-
-                        found += 1;
-                    }
-                }
-            }
+            found += 1;
         }
     }
 
