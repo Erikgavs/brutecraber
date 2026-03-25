@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.4.0] - 2026-03-25
+
+### Added
+- SHA256 hash cracking via wordlist
+- SHA256-Base64 support
+- Test files for SHA256 and SHA256-Base64
+
+### Changed
+- Refactored hash type selection from if/else to match
+- Updated test files with more realistic passwords
+
 ## [0.3.0] - 2026-03-25
 
 ### Added
