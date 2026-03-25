@@ -2,7 +2,7 @@ use anyhow;
 use clap::Parser;
 use colored::Colorize;
 use md5::compute;
-use sha1;
+use sha1::{Digest, Sha1};
 use std::fs;
 
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
@@ -76,6 +76,7 @@ fn main() -> anyhow::Result<()> {
 
     println!("\nSelected file: {}", args.file.green());
     println!("Selected wordlist {}", args.wordlist.green());
+    println!("Selected Hash type {}", args.)
 
     // for each word in wordlist, convert it to md5 hash
     // if the hash matches one in hashes.txt, that word is the original text
