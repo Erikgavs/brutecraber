@@ -3,6 +3,7 @@ use clap::Parser;
 use colored::Colorize;
 use md5::compute;
 use sha1::{Digest, Sha1};
+use sha2::Sha256;
 use std::fs;
 
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
@@ -139,6 +140,16 @@ fn main() -> anyhow::Result<()> {
                             found += 1;
                         }
                     }
+                }
+            }
+            "sha256" => {
+                let mut hash_engine = Sha256::new();
+                hash_engine.update(word);
+                let hash = format!("{:x}", hash_engine.finalize());
+                if hashes.contains(&hash.as_str()) {
+                    println!("{} hash cracked {} -> {}", good_star.green(), hash, word);
+
+                    found += 1;
                 }
             }
             _ => {
