@@ -2,6 +2,7 @@ use anyhow;
 use clap::Parser;
 use colored::Colorize;
 use md5::compute;
+use sha1;
 use std::fs;
 
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
@@ -14,17 +15,44 @@ struct Args {
 }
 
 fn banner() {
-    println!("{}", r" ___.                 __                            ___.".truecolor(222, 74, 31));
-    println!("{}", r" \_ |_________ __ ___/  |_  ____   ________________ \_ |__   ___________".truecolor(222, 74, 31));
-    println!("{}", r"  | __ \_  __ \  |  \   __\/ __ \_/ ___\_  __ \__  \ | __ \_/ __ \_  __ \".truecolor(222, 74, 31));
-    println!("{}", r"  | \_\ \  | \/  |  /|  | \  ___/\  \___|  | \// __ \| \_\ \  ___/|  | \/".truecolor(222, 74, 31));
-    println!("{}", r"  |___  /__|  |____/ |__|  \___  >\___  >__|  (____  /___  /\___  >__|".truecolor(222, 74, 31));
-    println!("{}", r"      \/                       \/     \/           \/    \/     \/".truecolor(222, 74, 31));
+    println!(
+        "{}",
+        r" ___.                 __                            ___.".truecolor(222, 74, 31)
+    );
+    println!(
+        "{}",
+        r" \_ |_________ __ ___/  |_  ____   ________________ \_ |__   ___________"
+            .truecolor(222, 74, 31)
+    );
+    println!(
+        "{}",
+        r"  | __ \_  __ \  |  \   __\/ __ \_/ ___\_  __ \__  \ | __ \_/ __ \_  __ \"
+            .truecolor(222, 74, 31)
+    );
+    println!(
+        "{}",
+        r"  | \_\ \  | \/  |  /|  | \  ___/\  \___|  | \// __ \| \_\ \  ___/|  | \/"
+            .truecolor(222, 74, 31)
+    );
+    println!(
+        "{}",
+        r"  |___  /__|  |____/ |__|  \___  >\___  >__|  (____  /___  /\___  >__|"
+            .truecolor(222, 74, 31)
+    );
+    println!(
+        "{}",
+        r"      \/                       \/     \/           \/    \/     \/"
+            .truecolor(222, 74, 31)
+    );
     println!("                                                Author: erikgavs");
     println!("                                                v0.2.0");
     println!();
-    println!(" [!] DISCLAIMER: This software is provided for ethical hacking and penetration testing");
-    println!("     only. You are solely responsible for your actions. Using this tool against targets");
+    println!(
+        " [!] DISCLAIMER: This software is provided for ethical hacking and penetration testing"
+    );
+    println!(
+        "     only. You are solely responsible for your actions. Using this tool against targets"
+    );
     println!("     without prior consent is a violation of applicable laws. Use at your own risk.");
     println!();
 }
