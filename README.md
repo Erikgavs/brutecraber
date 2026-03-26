@@ -15,6 +15,7 @@ A fast hash cracker using wordlist-based dictionary attacks. Built with Rust.
 
 - 🔓 MD5, SHA1, SHA256 and SHA512 hash cracking via wordlist
 - 🔑 Base64 support for all hash types
+- 🧂 Salted hash support (format: `salt:hash`)
 - 🔍 Auto-detection of hash type (no need to specify `-t`)
 - 🎨 Colored terminal output
 - 📁 Modular architecture (separate modules per hash type)
@@ -65,6 +66,18 @@ The binary will be at `./target/release/brutecraber`.
 
 # Crack SHA512 hashes encoded in Base64
 ./brutecraber -f hashes_base64.txt -w wordlist.txt -t sha512-base64
+
+# Crack MD5 salted hashes (format: salt:hash)
+./brutecraber -f salted_hashes.txt -w wordlist.txt -t md5-salt
+
+# Crack SHA1 salted hashes
+./brutecraber -f salted_hashes.txt -w wordlist.txt -t sha1-salt
+
+# Crack SHA256 salted hashes
+./brutecraber -f salted_hashes.txt -w wordlist.txt -t sha256-salt
+
+# Crack SHA512 salted hashes
+./brutecraber -f salted_hashes.txt -w wordlist.txt -t sha512-salt
 ```
 
 ### 🔧 Options
@@ -73,7 +86,7 @@ The binary will be at `./target/release/brutecraber`.
 |------|-------------|
 | `-f` | Path to file containing hashes (one per line) |
 | `-w` | Path to wordlist file |
-| `-t` | Hash type (optional, auto-detected if not specified): `md5`, `md5-base64`, `sha1`, `sha1-base64`, `sha256`, `sha256-base64`, `sha512`, `sha512-base64` |
+| `-t` | Hash type (optional, auto-detected if not specified): `md5`, `md5-base64`, `md5-salt`, `sha1`, `sha1-base64`, `sha1-salt`, `sha256`, `sha256-base64`, `sha256-salt`, `sha512`, `sha512-base64`, `sha512-salt` |
 | `-h` | Show help |
 
 ## 📄 Supported hash types
@@ -88,6 +101,10 @@ The binary will be at `./target/release/brutecraber`.
 | `sha256-base64` | SHA256 hashes encoded in Base64 |
 | `sha512` | Standard SHA512 hashes in hexadecimal |
 | `sha512-base64` | SHA512 hashes encoded in Base64 |
+| `md5-salt` | MD5 hashes with salt (format: `salt:hash`) |
+| `sha1-salt` | SHA1 hashes with salt (format: `salt:hash`) |
+| `sha256-salt` | SHA256 hashes with salt (format: `salt:hash`) |
+| `sha512-salt` | SHA512 hashes with salt (format: `salt:hash`) |
 
 ## ⚠️ Disclaimer
 

@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-03-26
+
+### Added
+- Salted hash support for MD5, SHA1, SHA256 and SHA512
+- New hash types: `md5-salt`, `sha1-salt`, `sha256-salt`, `sha512-salt`
+- `crack_with_salt()` function in each hash module
+- Test files for salted hashes
+
 ## [0.4.0] - 2026-03-25
 
 ### Added
