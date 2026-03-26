@@ -19,7 +19,8 @@ A fast hash cracker using wordlist-based dictionary attacks. Built with Rust.
 - 🔍 Auto-detection of hash type (no need to specify `-t`)
 - 🎨 Colored terminal output
 - 📁 Modular architecture (separate modules per hash type)
-- ⚡ Clean CLI interface with `-f`, `-w` and `-t` flags
+- ⚡ Multithreaded cracking with `rayon` (uses all CPU cores)
+- 🖥️ Clean CLI interface with `-f`, `-w`, `-t`, `-V` and `-h` flags
 
 ## 📦 Installation
 
@@ -88,6 +89,7 @@ The binary will be at `./target/release/brutecraber`.
 | `-w` | Path to wordlist file |
 | `-t` | Hash type (optional, auto-detected if not specified): `md5`, `md5-base64`, `md5-salt`, `sha1`, `sha1-base64`, `sha1-salt`, `sha256`, `sha256-base64`, `sha256-salt`, `sha512`, `sha512-base64`, `sha512-salt` |
 | `-h` | Show help |
+| `-V` | Show version |
 
 ## 📄 Supported hash types
 

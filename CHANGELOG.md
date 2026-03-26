@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - New hash types: `md5-salt`, `sha1-salt`, `sha256-salt`, `sha512-salt`
 - `crack_with_salt()` function in each hash module
 - Test files for salted hashes
+- Multithreaded cracking with `rayon` (parallel wordlist processing)
+- `--version` (`-V`) flag
+- Help descriptions for all CLI flags
+- Supported hashes and modes info in banner
 
 ## [0.4.0] - 2026-03-25
 
