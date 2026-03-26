@@ -13,9 +13,11 @@ A fast hash cracker using wordlist-based dictionary attacks. Built with Rust.
 
 ## ✨ Features
 
-- 🔓 MD5, SHA1 and SHA256 hash cracking via wordlist
-- 🔑 Base64 support for MD5, SHA1 and SHA256
+- 🔓 MD5, SHA1, SHA256 and SHA512 hash cracking via wordlist
+- 🔑 Base64 support for all hash types
+- 🔍 Auto-detection of hash type (no need to specify `-t`)
 - 🎨 Colored terminal output
+- 📁 Modular architecture (separate modules per hash type)
 - ⚡ Clean CLI interface with `-f`, `-w` and `-t` flags
 
 ## 📦 Installation
@@ -31,12 +33,15 @@ The binary will be at `./target/release/brutecraber`.
 ## 🚀 Usage
 
 ```bash
-./brutecraber -f <hashes_file> -w <wordlist> -t <hash_type>
+./brutecraber -f <hashes_file> -w <wordlist> [-t <hash_type>]
 ```
 
 ### 📝 Examples
 
 ```bash
+# Auto-detect hash type
+./brutecraber -f hashes.txt -w wordlist.txt
+
 # Crack MD5 hashes
 ./brutecraber -f hashes.txt -w wordlist.txt -t md5
 
@@ -54,6 +59,12 @@ The binary will be at `./target/release/brutecraber`.
 
 # Crack SHA256 hashes encoded in Base64
 ./brutecraber -f hashes_base64.txt -w wordlist.txt -t sha256-base64
+
+# Crack SHA512 hashes
+./brutecraber -f hashes.txt -w wordlist.txt -t sha512
+
+# Crack SHA512 hashes encoded in Base64
+./brutecraber -f hashes_base64.txt -w wordlist.txt -t sha512-base64
 ```
 
 ### 🔧 Options
@@ -62,7 +73,7 @@ The binary will be at `./target/release/brutecraber`.
 |------|-------------|
 | `-f` | Path to file containing hashes (one per line) |
 | `-w` | Path to wordlist file |
-| `-t` | Hash type: `md5`, `md5-base64`, `sha1`, `sha1-base64`, `sha256`, `sha256-base64` |
+| `-t` | Hash type (optional, auto-detected if not specified): `md5`, `md5-base64`, `sha1`, `sha1-base64`, `sha256`, `sha256-base64`, `sha512`, `sha512-base64` |
 | `-h` | Show help |
 
 ## 📄 Supported hash types
@@ -75,6 +86,8 @@ The binary will be at `./target/release/brutecraber`.
 | `sha1-base64` | SHA1 hashes encoded in Base64 |
 | `sha256` | Standard SHA256 hashes in hexadecimal |
 | `sha256-base64` | SHA256 hashes encoded in Base64 |
+| `sha512` | Standard SHA512 hashes in hexadecimal |
+| `sha512-base64` | SHA512 hashes encoded in Base64 |
 
 ## ⚠️ Disclaimer
 
