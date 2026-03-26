@@ -16,7 +16,11 @@ struct Args {
     #[arg(short = 'w', help = "Path to wordlist file")]
     wordlist: String,
 
-    #[arg(short = 't', default_value = "auto", help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt")]
+    #[arg(
+        short = 't',
+        default_value = "auto",
+        help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt"
+    )]
     hash: String,
 }
 
@@ -83,7 +87,8 @@ fn main() -> anyhow::Result<()> {
     // each line is a str "sadsadads", "asdasdasda"
     let hashes: Vec<&str> = content.lines().collect();
 
-    let wordlist = fs::read_to_string(&args.wordlist)?;
+    let bytes = fs::read(&args.wordlist)?;
+    let wordlist = String::from_utf8_lossy(&bytes).to_string();
 
     println!();
     println!("Selected file: {}", args.file.green());
