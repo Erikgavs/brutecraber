@@ -1,19 +1,25 @@
 use crate::hashes;
 use base64::{Engine, engine::general_purpose};
 use colored::Colorize;
+use rayon::prelude::*;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
     let good_star = "[*]";
     let bad_star = "[*]";
-    let mut found = 0;
+    // each thread waits to add a 1 (for example, in this case)
+    let found = AtomicUsize::new(0);
 
-    for word in wordlist.lines() {
-        match hash_type {
+    // .par_bridge, iterates in paralel, for_each (each line, it's a word)
+    wordlist
+        .lines()
+        .par_bridge()
+        .for_each(|word| match hash_type {
             "md5" => {
                 let hash = hashes::md5::crack(word);
                 if hashes.contains(&hash.as_str()) {
                     println!("{} hash cracked {} -> {}", good_star.green(), hash, word);
-                    found += 1;
+                    found.fetch_add(1, Ordering::Relaxed);
                 }
             }
             "md5-base64" => {
@@ -29,7 +35,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                                 hex,
                                 word
                             );
-                            found += 1;
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
@@ -38,7 +44,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                 let hash = hashes::sha1_hash::crack(word);
                 if hashes.contains(&hash.as_str()) {
                     println!("{} hash cracked {} -> {}", good_star.green(), hash, word);
-                    found += 1;
+                    found.fetch_add(1, Ordering::Relaxed);
                 }
             }
             "sha1-base64" => {
@@ -54,7 +60,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                                 hex,
                                 word
                             );
-                            found += 1;
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
@@ -63,7 +69,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                 let hash = hashes::sha256::crack(word);
                 if hashes.contains(&hash.as_str()) {
                     println!("{} hash cracked {} -> {}", good_star.green(), hash, word);
-                    found += 1;
+                    found.fetch_add(1, Ordering::Relaxed);
                 }
             }
             "sha256-base64" => {
@@ -79,7 +85,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                                 hex,
                                 word
                             );
-                            found += 1;
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
@@ -88,7 +94,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                 let hash = hashes::sha512::crack(word);
                 if hashes.contains(&hash.as_str()) {
                     println!("{} hash cracked {} -> {}", good_star.green(), hash, word);
-                    found += 1;
+                    found.fetch_add(1, Ordering::Relaxed);
                 }
             }
             "sha512-base64" => {
@@ -104,7 +110,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                                 hex,
                                 word
                             );
-                            found += 1;
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
@@ -114,8 +120,14 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                     if let Some((salt, target)) = h.split_once(':') {
                         let hash = hashes::md5::crack_with_salt(word, salt);
                         if hash == target {
-                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
-                            found += 1;
+                            println!(
+                                "{} hash cracked [salt:{}] {} -> {}",
+                                good_star.green(),
+                                salt,
+                                target,
+                                word
+                            );
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
@@ -125,8 +137,14 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                     if let Some((salt, target)) = h.split_once(':') {
                         let hash = hashes::sha1_hash::crack_with_salt(word, salt);
                         if hash == target {
-                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
-                            found += 1;
+                            println!(
+                                "{} hash cracked [salt:{}] {} -> {}",
+                                good_star.green(),
+                                salt,
+                                target,
+                                word
+                            );
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
@@ -136,8 +154,14 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                     if let Some((salt, target)) = h.split_once(':') {
                         let hash = hashes::sha256::crack_with_salt(word, salt);
                         if hash == target {
-                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
-                            found += 1;
+                            println!(
+                                "{} hash cracked [salt:{}] {} -> {}",
+                                good_star.green(),
+                                salt,
+                                target,
+                                word
+                            );
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
@@ -147,18 +171,23 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                     if let Some((salt, target)) = h.split_once(':') {
                         let hash = hashes::sha512::crack_with_salt(word, salt);
                         if hash == target {
-                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
-                            found += 1;
+                            println!(
+                                "{} hash cracked [salt:{}] {} -> {}",
+                                good_star.green(),
+                                salt,
+                                target,
+                                word
+                            );
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }
             }
             _ => {
                 println!("\n{} unsupported type of hash", bad_star.red());
-                break;
+                return;
             }
-        }
-    }
+        });
 
-    found
+    found.load(Ordering::Relaxed)
 }
