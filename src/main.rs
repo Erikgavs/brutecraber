@@ -1,4 +1,5 @@
 mod cracker;
+mod detector;
 mod hashes;
 
 use anyhow;
@@ -14,7 +15,7 @@ struct Args {
     #[arg(short = 'w')]
     wordlist: String,
 
-    #[arg(short = 't')]
+    #[arg(short = 't', default_value = "auto")]
     hash: String,
 }
 
@@ -80,14 +81,33 @@ fn main() -> anyhow::Result<()> {
     println!();
     println!("Selected file: {}", args.file.green());
     println!("Selected wordlist: {}", args.wordlist.green());
-    println!("Selected hash: {}", args.hash.green());
     println!();
 
-    let found = cracker::run(&hashes, &wordlist, &args.hash);
+    let auto_detect = if args.hash == "auto" {
+        // get's the first hash of the list
+        // unwrap_or(&"") -> if the txt is empty, use a empty string
+        let detect_hash = hashes.first().unwrap_or(&"");
+        detector::detect(detect_hash).to_string()
+    } else {
+        args.hash.clone()
+    };
+
+    // hash print
+    if args.hash == "auto" {
+        println!(
+            "{} Auto detected hash: {}\n",
+            good_star.green(),
+            auto_detect.yellow()
+        );
+    } else {
+        println!("Selected hash: {}\n", auto_detect.green());
+    }
+
+    let found = cracker::run(&hashes, &wordlist, &auto_detect);
 
     println!();
     if found == 0 {
-        println!("{} failed cracking hashes or bad file", bad_star.red());
+        println!("{} failed cracking hashes or bad file\n", bad_star.red());
     }
 
     if found > 0 {
