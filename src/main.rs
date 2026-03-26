@@ -1,6 +1,7 @@
 mod cracker;
 mod detector;
 mod hashes;
+mod rules;
 
 use anyhow;
 use clap::Parser;
