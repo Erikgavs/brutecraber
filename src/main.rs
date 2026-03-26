@@ -81,10 +81,9 @@ fn main() -> anyhow::Result<()> {
     println!();
     println!("Selected file: {}", args.file.green());
     println!("Selected wordlist: {}", args.wordlist.green());
-    println!("Selected hash: {}", args.hash.green());
     println!();
 
-    let _auto_detect = if args.hash == "auto" {
+    let auto_detect = if args.hash == "auto" {
         // get's the first hash of the list
         // unwrap_or(&"") -> if the txt is empty, use a empty string
         let detect_hash = hashes.first().unwrap_or(&"");
@@ -93,11 +92,22 @@ fn main() -> anyhow::Result<()> {
         args.hash.clone()
     };
 
-    let found = cracker::run(&hashes, &wordlist, &args.hash);
+    // hash print
+    if args.hash == "auto" {
+        println!(
+            "{} Auto detected hash: {}\n",
+            good_star.green(),
+            auto_detect.yellow()
+        );
+    } else {
+        println!("Selected hash: {}\n", auto_detect.green());
+    }
+
+    let found = cracker::run(&hashes, &wordlist, &auto_detect);
 
     println!();
     if found == 0 {
-        println!("{} failed cracking hashes or bad file", bad_star.red());
+        println!("{} failed cracking hashes or bad file\n", bad_star.red());
     }
 
     if found > 0 {
