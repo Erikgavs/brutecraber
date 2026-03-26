@@ -109,6 +109,50 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                     }
                 }
             }
+            "md5-salt" => {
+                for h in hashes {
+                    if let Some((salt, target)) = h.split_once(':') {
+                        let hash = hashes::md5::crack_with_salt(word, salt);
+                        if hash == target {
+                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
+                            found += 1;
+                        }
+                    }
+                }
+            }
+            "sha1-salt" => {
+                for h in hashes {
+                    if let Some((salt, target)) = h.split_once(':') {
+                        let hash = hashes::sha1_hash::crack_with_salt(word, salt);
+                        if hash == target {
+                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
+                            found += 1;
+                        }
+                    }
+                }
+            }
+            "sha256-salt" => {
+                for h in hashes {
+                    if let Some((salt, target)) = h.split_once(':') {
+                        let hash = hashes::sha256::crack_with_salt(word, salt);
+                        if hash == target {
+                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
+                            found += 1;
+                        }
+                    }
+                }
+            }
+            "sha512-salt" => {
+                for h in hashes {
+                    if let Some((salt, target)) = h.split_once(':') {
+                        let hash = hashes::sha512::crack_with_salt(word, salt);
+                        if hash == target {
+                            println!("{} hash cracked [salt:{}] {} -> {}", good_star.green(), salt, target, word);
+                            found += 1;
+                        }
+                    }
+                }
+            }
             _ => {
                 println!("\n{} unsupported type of hash", bad_star.red());
                 break;
