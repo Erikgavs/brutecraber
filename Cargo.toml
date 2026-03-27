@@ -7,6 +7,7 @@ license = "GPL-3.0"
 [dependencies]
 anyhow = "1.0.102"
 base64 = "0.22.1"
+bcrypt = "0.19.0"
 clap = { version ="4.5.49", features = ["derive"] }
 colored = "3.1.1"
 indicatif = "0.18.4"

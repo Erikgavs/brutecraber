@@ -214,6 +214,19 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                     }
                 }
             }
+            "bcrypt" => {
+                for h in hashes {
+                    if hashes::bcrypt::crack(word, h) {
+                        bar.println(format!(
+                            "{} hash cracked {} -> {}",
+                            good_star.green(),
+                            h,
+                            word
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
             _ => {
                 bar.println(format!("\n{} unsupported type of hash", bad_star.red()));
                 return;
