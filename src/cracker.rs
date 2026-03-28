@@ -227,6 +227,18 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str) -> usize {
                     }
                 }
             }
+            "ntlm" => {
+                let hash = hashes::ntlm::crack(word);
+                if hashes.contains(&hash.as_str()) {
+                    bar.println(format!(
+                        "{} hash cracked {} -> {}",
+                        good_star.green(),
+                        hash,
+                        word
+                    ));
+                    found.fetch_add(1, Ordering::Relaxed);
+                }
+            }
             _ => {
                 bar.println(format!("\n{} unsupported type of hash", bad_star.red()));
                 return;
