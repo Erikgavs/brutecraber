@@ -12,3 +12,14 @@ pub fn crack(word: &str) -> String {
         .map(|b| format!("{:02x}", b))  // convert each byte to hex: 93 -> "5d"
         .collect()   // join all: "5d41402a..."
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_crack() {
+        assert_eq!(crack("password"), "8846f7eaee8fb117ad06bdd830b7586c");
+        assert_eq!(crack("admin"), "209c6174da490caeb422f3fa5a7ae634");
+    }
+}
