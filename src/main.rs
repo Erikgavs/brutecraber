@@ -9,7 +9,7 @@ use colored::Colorize;
 use std::fs;
 
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
-#[command(name = "brutecraber", version = "0.5.0")]
+#[command(name = "brutecraber", version = "0.6.0")]
 struct Args {
     #[arg(short = 'f', help = "Path to file containing hashes")]
     file: String,
@@ -56,7 +56,7 @@ fn banner() {
             .truecolor(222, 74, 31)
     );
     println!("                                                Author: erikgavs");
-    println!("                                                v0.5.0");
+    println!("                                                v0.6.0");
     println!();
     println!(
         " [!] DISCLAIMER: This software is provided for ethical hacking and penetration testing"
@@ -67,7 +67,7 @@ fn banner() {
     println!("     without prior consent is a violation of applicable laws. Use at your own risk.");
     println!();
     println!(
-        " {} MD5 · SHA1 · SHA256 · SHA512 · Bcrypt  {} hex · base64 · salted",
+        " {} MD5 · SHA1 · SHA256 · SHA512 · Bcrypt · NTLM  {} hex · base64 · salted",
         "Supported:".truecolor(222, 74, 31),
         "Modes:".truecolor(222, 74, 31)
     );

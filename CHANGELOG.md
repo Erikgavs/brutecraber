@@ -4,13 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.6.0] - 2026-03-27
+## [0.6.0] - 2026-03-28
 
 ### Added
 - Bcrypt hash cracking support
+- NTLM hash cracking support (Windows hashes)
 - Progress bar with `indicatif`
 - UTF-8 lossy handling for wordlists (no more crashes with rockyou.txt)
 - Rule-based transformation module (leet speak, capitalize, append numbers, etc.)
+- CONTRIBUTING.md for open-source contributors
+- Improved `--help` with flag descriptions
 
 ## [0.5.0] - 2026-03-26
 

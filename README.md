@@ -15,7 +15,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-DE4A1F?logo=rust)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.5.0-orange)](https://github.com/erikgavs/brutecraber/releases)
+[![Version](https://img.shields.io/badge/version-0.6.0-orange)](https://github.com/erikgavs/brutecraber/releases)
 
 Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for parallel processing across all CPU cores.
 
@@ -30,7 +30,7 @@ Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for par
 - **Fast** — Multithreaded by default. Uses all your CPU cores out of the box.
 - **Simple** — One command. No config files. No setup.
 - **Smart** — Auto-detects hash types. Just point it at a file and go.
-- **13 modes** — Hex, Base64, Salted, and Bcrypt support for MD5, SHA1, SHA256, SHA512, and Bcrypt.
+- **14 modes** — Hex, Base64, Salted, Bcrypt, and NTLM support.
 
 ---
 
@@ -80,6 +80,9 @@ The binary will be at `./target/release/brutecraber`.
 
 # Crack bcrypt hashes
 ./brutecraber -f bcrypt_hashes.txt -w rockyou.txt -t bcrypt
+
+# Crack NTLM hashes (Windows)
+./brutecraber -f ntlm_hashes.txt -w rockyou.txt -t ntlm
 ```
 
 ### Options
@@ -113,6 +116,7 @@ The binary will be at `./target/release/brutecraber`.
 | SHA256 | `sha256` | `sha256-base64` | `sha256-salt` |
 | SHA512 | `sha512` | `sha512-base64` | `sha512-salt` |
 | Bcrypt | `bcrypt` | — | — |
+| NTLM | `ntlm` | — | — |
 
 > Salted hashes use the format `salt:hash` (one per line).
 > Bcrypt hashes include their own salt internally (`$2y$10$...`).
@@ -133,7 +137,8 @@ brutecraber/
 │       ├── sha1_hash.rs # SHA1 hashing
 │       ├── sha256.rs    # SHA256 hashing
 │       ├── sha512.rs    # SHA512 hashing
-│       └── bcrypt.rs    # Bcrypt verification
+│       ├── bcrypt.rs    # Bcrypt verification
+│       └── ntlm.rs     # NTLM hashing (Windows)
 ├── tests/               # Test hashes and wordlists
 ├── Cargo.toml
 ├── CHANGELOG.md
@@ -146,9 +151,9 @@ brutecraber/
 
 - [x] Progress bar with `indicatif`
 - [x] Bcrypt support
+- [x] NTLM hash support
 - [ ] Output results to file (`-o`)
 - [ ] Benchmark mode (`--benchmark`)
-- [ ] NTLM hash support
 - [ ] Statistics (time, hashes/sec)
 - [ ] Rule-based transformations (leet speak, capitalize, append numbers)
 
