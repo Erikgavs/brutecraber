@@ -4,8 +4,8 @@
 > This project is under active development
 
 ## Requirements
-  - Git (Only required for manual instalation)
-  - Rust (Only required for manual instalatión)
+  - Git (Only required for manual installation)
+  - Rust (Only required for manual installation)
 
 ---
 
@@ -16,7 +16,7 @@ Download the latest precompiled binary from my repository releases
 https://github.com/Erikgavs/brutecraber/releases
 
 ## Steps
-  Download the binary for your OS (Temporaly only compatible wit linux and macOS)
+  Download the binary for your OS (Temporarily only compatible with linux and macOS)
   
   Make the binary executable 
   
@@ -31,7 +31,7 @@ https://github.com/Erikgavs/brutecraber/releases
 
 ---
 
-# Manual instalation (From Source)
+# Manual installation (From Source)
 
 ## Steps
 
@@ -55,7 +55,7 @@ cargo build --release
 ./target/release/brutecraber
 ```
 
-## Install the tool globaly
+## Install the tool globally
 
 ```bash
 cargo install --path .
