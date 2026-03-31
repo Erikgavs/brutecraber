@@ -13,7 +13,7 @@
 
 Download the latest precompiled binary from my repository releases
 
-https://github.com/Erikgavs/brutecraber/releases
+[Github Releases](https://github.com/Erikgavs/brutecraber/releases)
 
 ## Steps
   Download the binary for your OS (Temporarily only compatible with linux and macOS)
