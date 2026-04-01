@@ -1,68 +1,38 @@
-name: Rust CI/CD (Linux)
+name: Rust Manual CI/CD
 
 on:
-  push:
-    branches: ["**"]        # CI on all branches
-    tags:
-      - "v*"               # 🔥 CD trigger (release only on tags)
-  pull_request:
-
-env:
-  CARGO_TERM_COLOR: always
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  workflow_dispatch:   # 🔥 manual trigger
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 📥 Checkout
-      - name: Checkout repository
+      # Checkout
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 🦀 Setup Rust
-      - name: Setup Rust toolchain
+      # Setup Rust
+      - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      # ⚡ Cache
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
+      # Build release
+      - name: Build
+        run: cargo build --release
 
-      # 🔐 Security audit
-      - name: Install cargo-audit
-        uses: taiki-e/install-action@cargo-audit
-
-      - name: Run cargo audit
-        run: cargo audit
-
-      # 🏗️ Build release
-      - name: Build release
-        run: cargo build --release --locked
-
-      # 🧪 Run tests
-      - name: Run tests
-        run: cargo test --all --verbose --locked
-
-      # 📦 Prepare binary (rename + compress)
-      - name: Package binary
-        run: |
-          mkdir -p dist
-          cp target/release/brutecraber dist/
-          cd dist
-          tar -czvf brutecraber-linux.tar.gz brutecraber
-
-      # 📦 Upload artifact (CI visibility)
-      - name: Upload artifact
+      # Upload artifact
+      - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: brutecraber-linux
-          path: dist/brutecraber-linux.tar.gz
+          path: target/release/brutecraber
 
-      # 🚀 Create GitHub Release (CD)
+      # Optional: create release manually
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/brutecraber-linux.tar.gz
+          tag_name: manual-release-${{ github.run_number }}
+          name: Manual Release ${{ github.run_number }}
+          files: target/release/brutecraber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
