@@ -46,32 +46,6 @@ By default, the tool will display some help for the user
 | Bcrypt | `bcrypt` |
 | NTLM | `ntlm` |
 
-## Examples
-
-Basic usage with auto-detection:
-
-```bash
-./brutecraber -f hashes.txt -w wordlist.txt
-```
-
-Specify hash type:
-
-```bash
-./brutecraber -f hashes.txt -w rockyou.txt -t sha256
-```
-
-With rule-based transformations:
-
-```bash
-./brutecraber -f hashes.txt -w rockyou.txt -t md5 --rules
-```
-
-Salted hashes (file format: `salt:hash` per line):
-
-```bash
-./brutecraber -f salted.txt -w rockyou.txt -t md5-salt
-```
-
 ## Rules
 
 When `--rules` is enabled, each word in the wordlist generates multiple variants:
