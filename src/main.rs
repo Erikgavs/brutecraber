@@ -3,7 +3,6 @@ mod detector;
 mod hashes;
 mod rules;
 
-use anyhow;
 use clap::Parser;
 use colored::Colorize;
 use std::fs;

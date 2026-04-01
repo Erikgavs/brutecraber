@@ -1,10 +1,16 @@
+use md5::{Digest, Md5};
+
 pub fn crack(word: &str) -> String {
-    format!("{:x}", md5::compute(word))
+    let mut hash_engine = Md5::new();
+    hash_engine.update(word);
+    format!("{:x}", hash_engine.finalize())
 }
 
 pub fn crack_with_salt(word: &str, salt: &str) -> String {
     let salted = format!("{}{}", salt, word);
-    format!("{:x}", md5::compute(salted))
+    let mut hash_engine = Md5::new();
+    hash_engine.update(salted);
+    format!("{:x}", hash_engine.finalize())
 }
 
 #[cfg(test)]

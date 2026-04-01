@@ -20,12 +20,12 @@ mod tests {
     #[test]
     fn test_crack() {
         // echo -n password | sha3-256sum
-        assert_eq!(crack("password"), "c04529d81c000336594d6092004273f550bc6a987627443f01740925232a9e3e");
-        assert_eq!(crack("admin"), "08e803ca87889151590e804f568779901768e999c063462d164d1f5682851d7e");
+        assert_eq!(crack("password"), "c0067d4af4e87f00dbac63b6156828237059172d1bbeac67427345d6a9fda484");
+        assert_eq!(crack("admin"), "fb001dfcffd1c899f3297871406242f097aecf1a5342ccf3ebcd116146188e4b");
     }
 
     #[test]
     fn test_crack_with_salt() {
-        assert_eq!(crack_with_salt("password", "x7k2"), "28e2d27e89e023199e52e46e8c75043a539f37c3563964147053e1a067e6f663");
+        assert_eq!(crack_with_salt("password", "x7k2"), "a4b91e1006e60758ffe90df79580b5b15fd37ab6e6a49a8c03939beff5a61e3a");
     }
 }
