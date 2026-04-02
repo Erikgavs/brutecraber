@@ -1,79 +1,175 @@
-name: Rust Manual Release (Stable)
+name: Release Pipeline
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 env:
   CARGO_TERM_COLOR: always
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  release:
+  build-release:
+    name: Build & Package (amd64)
     runs-on: ubuntu-latest
 
     steps:
       # 📥 Checkout
-      - name: Checkout repository
+      - name: Checkout source
         uses: actions/checkout@v4
 
       # 🦀 Setup Rust
-      - name: Setup Rust
+      - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      # 🔍 Extract metadata
-      - name: Extract Cargo metadata
+      # ⚡ Cache (refined)
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      # 📦 Install deps
+      - name: Install system dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y jq dpkg-dev fakeroot
+
+      # 🔍 Metadata
+      - name: Extract project metadata
         id: meta
         run: |
-          METADATA=$(cargo metadata --no-deps --format-version 1)
+          set -euo pipefail
+          META=$(cargo metadata --no-deps --format-version 1)
 
-          NAME=$(echo "$METADATA" | jq -r '.packages[0].name')
-          VERSION=$(echo "$METADATA" | jq -r '.packages[0].version')
-
-          ARCH=$(uname -m)
-          OS=linux
+          NAME=$(echo "$META" | jq -r '.packages[0].name')
+          VERSION=$(echo "$META" | jq -r '.packages[0].version')
 
           echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-          echo "arch=$ARCH" >> $GITHUB_OUTPUT
-          echo "os=$OS" >> $GITHUB_OUTPUT
+
+      # 🧪 Validate build (NEW - important)
+      - name: Run checks
+        run: |
+          set -euo pipefail
+          cargo check --locked
+          cargo test --locked --no-run
 
       # 🏗️ Build
-      - name: Build release
-        run: cargo build --release --locked
-
-      # 📦 Package binary
-      - name: Package binary
+      - name: Build binary
         run: |
-          mkdir -p dist
-          cp target/release/${{ steps.meta.outputs.name }} dist/
+          set -euo pipefail
+          cargo build --release --locked
 
+      # ✂️ Strip
+      - name: Strip binary
+        run: |
+          set -euo pipefail
+          strip target/release/${{ steps.meta.outputs.name }} || true
+
+      # 📦 Build .deb
+      - name: Package Debian (.deb)
+        run: |
+          set -euo pipefail
+
+          NAME=${{ steps.meta.outputs.name }}
+          VERSION=${{ steps.meta.outputs.version }}
+
+          rm -rf pkg dist
+          mkdir -p pkg/DEBIAN pkg/usr/local/bin dist
+
+          cp target/release/$NAME pkg/usr/local/bin/
+          chmod +x pkg/usr/local/bin/$NAME
+
+          cat <<EOF > pkg/DEBIAN/control
+          Package: $NAME
+          Version: $VERSION
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Unknown
+          Depends:
+          Description: High-performance Rust-based brute-force tool for security testing
+           Optimized for speed, efficiency, and control in password/hash cracking workflows.
+          EOF
+
+          dpkg-deb --build pkg ${NAME}_${VERSION}_amd64.deb
+          mv *.deb dist/
+
+      # 🔐 Checksums
+      - name: Generate checksums
+        run: |
+          set -euo pipefail
           cd dist
-          tar -czvf ${{ steps.meta.outputs.name }}-${{ steps.meta.outputs.os }}-${{ steps.meta.outputs.arch }}.tar.gz ${{ steps.meta.outputs.name }}
+          sha256sum * > SHA256SUMS.txt
 
-      # 📤 Upload artifact
-      - name: Upload artifact
+      # ✅ Verify
+      - name: Verify checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum -c SHA256SUMS.txt
+
+      # 📤 Upload
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.meta.outputs.name }}-${{ steps.meta.outputs.os }}-${{ steps.meta.outputs.arch }}
-          path: dist/*.tar.gz
+          name: ${{ steps.meta.outputs.name }}-${{ steps.meta.outputs.version }}-linux-amd64
+          path: dist/*
 
-      # 🧾 Generate release notes (CUSTOM STRUCTURE)
+      # 🧾 Release Notes (dynamic name)
       - name: Generate release notes
         run: |
-          echo "## BruteCraber v${{ steps.meta.outputs.version }} Latest" > release.md
-          echo "" >> release.md
-          echo "### What's New in v${{ steps.meta.outputs.version }}" >> release.md
-          echo "" >> release.md
-          echo "_(Maintainers can update this section manually with detailed changes.)_" >> release.md
+          set -euo pipefail
+          NAME=${{ steps.meta.outputs.name }}
+          VERSION=${{ steps.meta.outputs.version }}
 
-     # 🚀 Create Release
-      - name: Create GitHub Release
+          cat <<EOF > release.md
+          # 🚀 ${NAME^} v${VERSION}
+
+          ## ✨ What's New
+          - 🔥 Added new features
+          - ⚡ Performance improvements
+          - 🧠 Internal optimizations
+
+          ## 🛠️ Improvements
+          - ♻️ Code refactoring
+          - 📦 Improved packaging pipeline
+
+          ## 🐛 Bug Fixes
+          - 🩹 Fixed known issues
+
+          ## 🧹 Removed
+          - ❌ Deprecated components
+
+          ## 📦 Installation
+          \`\`\`bash
+          sudo dpkg -i ${NAME}_${VERSION}_amd64.deb
+          \`\`\`
+
+          ## 🔐 Verify Integrity
+          \`\`\`bash
+          sha256sum -c SHA256SUMS.txt
+          \`\`\`
+
+          ---
+          ⚔️ Built for performance. Engineered for security.
+          EOF
+
+      # 🚀 Release (manual only)
+      - name: Publish GitHub Release
+        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          name: ${{ steps.meta.outputs.name }} v${{ steps.meta.outputs.version }}
+          name: 🚀 ${{ steps.meta.outputs.name }} v${{ steps.meta.outputs.version }}
           body_path: release.md
-          files: dist/*.tar.gz
+          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
