@@ -1,8 +1,9 @@
 [package]
 name = "brutecraber"
-version = "0.1.0"
-edition = "2024"
+version = "0.6.0"
+edition = "2021"
 license = "GPL-3.0"
+description = "A blazing-fast, multithreaded hash cracker built with Rust"
 
 [dependencies]
 anyhow = "1.0.102"
