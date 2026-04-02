@@ -19,3 +19,11 @@ rayon = "1.11.0"
 sha1 = "0.10.6"
 sha2 = "0.10.9"
 sha3 = "0.10.8"
+num_cpus = "1.17.0"
+
+[profile.release]
+opt-level = 3          # Maximum optimization
+lto = true             # Link Time Optimization
+codegen-units = 1      # Better optimization, slower compile
+strip = true           # Remove debug symbols (smaller binary)
+panic = "abort"        # Smaller + faster panic handling

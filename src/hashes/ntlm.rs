@@ -7,10 +7,10 @@ pub fn crack(word: &str) -> String {
     let mut hasher = Md4::new();
     hasher.update(&winencode);
     hasher
-        .finalize()  // get hash as raw bytes [93, 65, 64, 42, ...]
-        .iter()      // iterate each byte
-        .map(|b| format!("{:02x}", b))  // convert each byte to hex: 93 -> "5d"
-        .collect()   // join all: "5d41402a..."
+        .finalize() // get hash as raw bytes [93, 65, 64, 42, ...]
+        .iter() // iterate each byte
+        .map(|b| format!("{:02x}", b)) // convert each byte to hex: 93 -> "5d"
+        .collect() // join all: "5d41402a..."
 }
 
 #[cfg(test)]
