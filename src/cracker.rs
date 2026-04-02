@@ -190,7 +190,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
                         }
                     }
                 }
-                "sha256-auto" => {
+                "sha256/sha3-256" => {
                     let hash = hashes::sha256::crack(w);
                     if hashes.contains(&hash.as_str()) {
                         bar.println(format!(
