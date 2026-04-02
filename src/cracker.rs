@@ -28,7 +28,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         "sha256", "sha256-base64", "sha256-salt",
         "sha512", "sha512-base64", "sha512-salt",
         "sha3-256", "sha3-256-base64", "sha3-256-salt",
-        "sha256-auto",
+        "sha256/sha3-256",
         "bcrypt", "ntlm",
     ];
 
