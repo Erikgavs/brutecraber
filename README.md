@@ -15,7 +15,8 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-DE4A1F?logo=rust)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.6.0-orange)](https://github.com/erikgavs/brutecraber/releases)
+[![Version](https://img.shields.io/badge/version-0.7.1-orange)](https://github.com/erikgavs/brutecraber/releases)
+[![crates.io](https://img.shields.io/crates/v/brutecraber.svg)](https://crates.io/crates/brutecraber)
 
 Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for parallel processing across all CPU cores.
 
@@ -30,7 +31,7 @@ Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for par
 - **Fast** — Multithreaded by default. Uses all your CPU cores out of the box.
 - **Simple** — One command. No config files. No setup.
 - **Smart** — Auto-detects hash types. Just point it at a file and go.
-- **14 modes** — Hex, Base64, Salted, Bcrypt, and NTLM support.
+- **17 modes** — Hex, Base64, Salted, Bcrypt, NTLM, and SHA3-256 support.
 
 ---
 
@@ -49,6 +50,14 @@ Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for par
 ---
 
 ## Installation
+
+### From crates.io (recommended)
+
+```bash
+cargo install brutecraber
+```
+
+### From source
 
 ```bash
 git clone https://github.com/erikgavs/brutecraber.git
@@ -92,6 +101,7 @@ The binary will be at `./target/release/brutecraber`.
 | `-f` | Path to file containing hashes (one per line) | *required* |
 | `-w` | Path to wordlist file | *required* |
 | `-t` | Hash type (see table below) | `auto` |
+| `-r` / `--rules` | Enable rule-based transformations | `false` |
 | `-h` | Show help | — |
 | `-V` | Show version | — |
 
@@ -115,6 +125,7 @@ The binary will be at `./target/release/brutecraber`.
 | SHA1 | `sha1` | `sha1-base64` | `sha1-salt` |
 | SHA256 | `sha256` | `sha256-base64` | `sha256-salt` |
 | SHA512 | `sha512` | `sha512-base64` | `sha512-salt` |
+| SHA3-256 | `sha3-256` | `sha3-256-base64` | `sha3-256-salt` |
 | Bcrypt | `bcrypt` | — | — |
 | NTLM | `ntlm` | — | — |
 
@@ -131,12 +142,14 @@ brutecraber/
 │   ├── main.rs          # CLI, banner, entry point
 │   ├── cracker.rs       # Core cracking logic (multithreaded)
 │   ├── detector.rs      # Auto-detection by hash length
+│   ├── rules.rs         # Rule-based word transformations
 │   └── hashes/
 │       ├── mod.rs       # Module exports
 │       ├── md5.rs       # MD5 hashing
 │       ├── sha1_hash.rs # SHA1 hashing
 │       ├── sha256.rs    # SHA256 hashing
 │       ├── sha512.rs    # SHA512 hashing
+│       ├── sha3_256.rs  # SHA3-256 hashing
 │       ├── bcrypt.rs    # Bcrypt verification
 │       └── ntlm.rs     # NTLM hashing (Windows)
 ├── tests/               # Test hashes and wordlists
@@ -155,7 +168,7 @@ brutecraber/
 - [ ] Output results to file (`-o`)
 - [ ] Benchmark mode (`--benchmark`)
 - [ ] Statistics (time, hashes/sec)
-- [ ] Rule-based transformations (leet speak, capitalize, append numbers)
+- [x] Rule-based transformations (leet speak, capitalize, append numbers)
 
 ---
 

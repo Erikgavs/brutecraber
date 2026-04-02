@@ -1,14 +1,16 @@
 [package]
 name = "brutecraber"
-version = "0.1.0"
-edition = "2024"
+version = "0.7.1"
+edition = "2021"
 license = "GPL-3.0"
+description = "A blazing-fast, multithreaded hash cracker built with Rust"
+repository = "https://github.com/Erikgavs/brutecraber"
 
 [dependencies]
 anyhow = "1.0.102"
 base64 = "0.22.1"
 bcrypt = "0.19.0"
-clap = { version ="4.5.49", features = ["derive"] }
+clap = { version = "4.5.49", features = ["derive"] }
 colored = "3.1.1"
 indicatif = "0.18.4"
 md4 = "0.11.0"

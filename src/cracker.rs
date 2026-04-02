@@ -22,6 +22,22 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     // each thread waits to add a 1 (for example, in this case)
     let found = AtomicUsize::new(0);
 
+    let valid_types = [
+        "md5", "md5-base64", "md5-salt",
+        "sha1", "sha1-base64", "sha1-salt",
+        "sha256", "sha256-base64", "sha256-salt",
+        "sha512", "sha512-base64", "sha512-salt",
+        "sha3-256", "sha3-256-base64", "sha3-256-salt",
+        "sha256/sha3-256",
+        "bcrypt", "ntlm",
+    ];
+
+    if !valid_types.contains(&hash_type) {
+        bar.println(format!("\n{} unsupported type of hash", bad_star.red()));
+        bar.finish();
+        return 0;
+    }
+
     // .par_bridge, iterates in paralel, for_each (each line, it's a word)
     wordlist.lines().par_bridge().for_each(|word| {
         bar.inc(1);
@@ -187,6 +203,29 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
                                 ));
                                 found.fetch_add(1, Ordering::Relaxed);
                             }
+                        }
+                    }
+                }
+                "sha256/sha3-256" => {
+                    let hash = hashes::sha256::crack(w);
+                    if hashes.contains(&hash.as_str()) {
+                        bar.println(format!(
+                            "{} hash cracked {} -> {}",
+                            good_star.green(),
+                            hash,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    } else {
+                        let hash = hashes::sha3_256::crack(w);
+                        if hashes.contains(&hash.as_str()) {
+                            bar.println(format!(
+                                "{} hash cracked {} -> {}",
+                                good_star.green(),
+                                hash,
+                                w
+                            ));
+                            found.fetch_add(1, Ordering::Relaxed);
                         }
                     }
                 }

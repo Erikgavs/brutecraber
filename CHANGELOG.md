@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.7.0] - 2026-04-02
+
+### Added
+- SHA3-256 hash cracking support (hex, base64, salted)
+- Rule-based transformations connected to cracker (`--rules` / `-r` flag)
+- Dual auto-detection for SHA256/SHA3-256 hashes
+- Hash type validation before cracking loop
+- Documentation: `docs/usage.md`, `docs/examples.md`
+
+### Fixed
+- `Cargo.toml` version synced correctly
+- `Cargo.toml` edition corrected from "2024" to "2021"
+- Help text now lists bcrypt and ntlm as supported types
+
+### Contributors
+- @Deepak8858 — SHA3-256 support (#29)
+- @aniketchavan2211 — Release workflow (#30)
+- @piny4man — MD5 crate migration to RustCrypto (#33)
+
 ## [0.6.0] - 2026-03-28
 
 ### Added
