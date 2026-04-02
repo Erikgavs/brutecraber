@@ -15,7 +15,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-DE4A1F?logo=rust)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.7.0-orange)](https://github.com/erikgavs/brutecraber/releases)
+[![Version](https://img.shields.io/badge/version-0.7.1-orange)](https://github.com/erikgavs/brutecraber/releases)
 [![crates.io](https://img.shields.io/crates/v/brutecraber.svg)](https://crates.io/crates/brutecraber)
 
 Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for parallel processing across all CPU cores.
