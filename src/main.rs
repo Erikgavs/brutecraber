@@ -2,6 +2,7 @@ mod cracker;
 mod detector;
 mod hashes;
 mod rules;
+mod benchmark;
 
 use clap::Parser;
 use colored::Colorize;
@@ -10,25 +11,28 @@ use std::fs;
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
 #[command(name = "brutecraber", version = "0.7.1")]
 struct Args {
-    #[arg(short = 'f', help = "Path to file containing hashes")]
-    file: String,
-
-    #[arg(short = 'w', help = "Path to wordlist file")]
-    wordlist: String,
+    #[arg(
+        short = 'f',
+        help = "Path to file containing hashes",
+        required_unless_present = "benchmark"
+    )]
+    file: Option<String>,
 
     #[arg(
-        short = 't',
-        default_value = "auto",
-        help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt, sha3-256, sha3-256-base64, sha3-256-salt, bcrypt, ntlm"
+        short = 'w',
+        help = "Path to wordlist file",
+        required_unless_present = "benchmark"
     )]
+    wordlist: Option<String>,
+
+    #[arg(short = 't', default_value = "auto", help = "Hash type...")]
     hash: String,
-    #[arg(
-        short = 'r',
-        long = "rules",
-        default_value_t = false,
-        help = "Enable rule-based transformations"
-    )]
+
+    #[arg(short = 'r', long = "rules", default_value_t = false)]
     rules: bool,
+
+    #[arg(long = "benchmark", default_value_t = false)]
+    benchmark: bool,
 }
 
 fn banner() {
@@ -82,36 +86,45 @@ fn banner() {
 
 fn main() -> anyhow::Result<()> {
     banner();
+
     let good_star = "[*]";
     let bad_star = "[*]";
 
-    // we save user input (file and wordlist)
-    let args = Args::parse(); // user input because Args (struct) have a string
+    let args = Args::parse();
 
-    //read content
-    let content = fs::read_to_string(&args.file)?;
+    if args.benchmark {
+        benchmark::run();
+        return Ok(());
+    }
 
-    // each line is a str "sadsadads", "asdasdasda"
+    let file = args
+        .file
+        .as_deref()
+        .ok_or_else(|| anyhow::anyhow!("[-] Missing -f (hash file)"))?;
+
+    let wordlist_path = args
+        .wordlist
+        .as_deref()
+        .ok_or_else(|| anyhow::anyhow!("[-] Missing -w (wordlist)"))?;
+
+    let content = fs::read_to_string(file)?;
     let hashes: Vec<&str> = content.lines().collect();
 
-    let bytes = fs::read(&args.wordlist)?;
+    let bytes = fs::read(wordlist_path)?;
     let wordlist = String::from_utf8_lossy(&bytes).to_string();
 
     println!();
-    println!("Selected file: {}", args.file.green());
-    println!("Selected wordlist: {}", args.wordlist.green());
+    println!("Selected file: {}", file.green());
+    println!("Selected wordlist: {}", wordlist_path.green());
     println!();
 
     let auto_detect = if args.hash == "auto" {
-        // get's the first hash of the list
-        // unwrap_or(&"") -> if the txt is empty, use a empty string
         let detect_hash = hashes.first().unwrap_or(&"");
         detector::detect(detect_hash).to_string()
     } else {
         args.hash.clone()
     };
 
-    // hash print
     if args.hash == "auto" {
         println!(
             "{} Auto detected hash: {}\n",
@@ -125,11 +138,10 @@ fn main() -> anyhow::Result<()> {
     let found = cracker::run(&hashes, &wordlist, &auto_detect, args.rules);
 
     println!();
+
     if found == 0 {
         println!("{} failed cracking hashes or bad file\n", bad_star.red());
-    }
-
-    if found > 0 {
+    } else {
         println!(
             "{} cracked {}/{} hashes",
             good_star.green(),
@@ -137,5 +149,6 @@ fn main() -> anyhow::Result<()> {
             hashes.len()
         );
     }
+
     Ok(())
 }
