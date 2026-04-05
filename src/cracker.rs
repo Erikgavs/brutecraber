@@ -1,9 +1,12 @@
 use crate::hashes;
-use base64::{Engine, engine::general_purpose};
+use base64::{engine::general_purpose, Engine};
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    hash,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usize {
     let good_star = "[*]";
@@ -23,13 +26,27 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     let found = AtomicUsize::new(0);
 
     let valid_types = [
-        "md5", "md5-base64", "md5-salt",
-        "sha1", "sha1-base64", "sha1-salt",
-        "sha256", "sha256-base64", "sha256-salt",
-        "sha512", "sha512-base64", "sha512-salt",
-        "sha3-256", "sha3-256-base64", "sha3-256-salt",
+        "md5",
+        "md5-base64",
+        "md5-salt",
+        "sha1",
+        "sha1-base64",
+        "sha1-salt",
+        "sha256",
+        "sha256-base64",
+        "sha256-salt",
+        "sha512",
+        "sha512-base64",
+        "sha512-salt",
+        "sha3-256",
+        "sha3-256-base64",
+        "sha3-256-salt",
         "sha256/sha3-256",
-        "bcrypt", "ntlm",
+        "sha3-512",
+        "sha3-512",
+        "sha3-512-salt",
+        "bcrypt",
+        "ntlm",
     ];
 
     if !valid_types.contains(&hash_type) {
@@ -187,6 +204,18 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
                         found.fetch_add(1, Ordering::Relaxed);
                     }
                 }
+                "sha3-512" => {
+                    let hash = hashes::sha3_512::crack(w);
+                    if hashes.contains(&hash.as_str()) {
+                        bar.println(format!(
+                            "{} hash cracked {} -> {}",
+                            good_star.green(),
+                            hash,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
                 "sha3-256-base64" => {
                     let hash = hashes::sha3_256::crack(w);
                     for h in hashes {
@@ -301,6 +330,23 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
                     for h in hashes {
                         if let Some((salt, target)) = h.split_once(':') {
                             let hash = hashes::sha3_256::crack_with_salt(w, salt);
+                            if hash == target {
+                                bar.println(format!(
+                                    "{} hash cracked [salt:{}] {} -> {}",
+                                    good_star.green(),
+                                    salt,
+                                    target,
+                                    w
+                                ));
+                                found.fetch_add(1, Ordering::Relaxed);
+                            }
+                        }
+                    }
+                }
+                "sha3-512-salt" => {
+                    for h in hashes {
+                        if let Some((salt, target)) = h.split_once(':') {
+                            let hash = hashes::sha3_512::crack_with_salt(w, salt);
                             if hash == target {
                                 bar.println(format!(
                                     "{} hash cracked [salt:{}] {} -> {}",
