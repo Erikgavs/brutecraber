@@ -52,6 +52,18 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         return 0;
     }
 
+    if hash_type == "md5" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            let hash = hashes::md5::crack(w);
+            if hashes.contains(&hash.as_str()) {
+                bar.println(format!("{} hash cracked {} -> {}", star.green(), hash, w));
+                found.fetch_add(1, Ordering::Relaxed);
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
     // .par_bridge, iterates in paralel, for_each (each line, it's a word)
     wordlist.lines().par_bridge().for_each(|word| {
         bar.inc(1);
