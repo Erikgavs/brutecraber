@@ -42,6 +42,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         "sha3-512",
         "sha3-512-base64",
         "sha3-512-salt",
+        "sha512/sha3-512",
         "bcrypt",
         "ntlm",
     ];
