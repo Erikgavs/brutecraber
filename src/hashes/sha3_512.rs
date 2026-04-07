@@ -1,4 +1,3 @@
-use base64::Engine;
 use sha3::{Digest, Sha3_512};
 
 pub fn crack(word: &str) -> String {
