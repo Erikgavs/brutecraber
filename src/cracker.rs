@@ -136,6 +136,144 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         return found.load(Ordering::Relaxed);
     }
 
+    if hash_type == "md5-base64" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            let hash = hashes::md5::crack(w);
+            for h in hashes {
+                if let Ok(decoded) = general_purpose::STANDARD.decode(h) {
+                    let hex: String = decoded.iter().map(|n| format!("{:02x}", n)).collect();
+                    if hex == hash {
+                        bar.println(format!(
+                            "{} hash decoded and cracked {} -> {} -> {}",
+                            star.green(),
+                            h,
+                            hex,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
+    if hash_type == "sha1-base64" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            let hash = hashes::sha1_hash::crack(w);
+            for h in hashes {
+                if let Ok(decoded) = general_purpose::STANDARD.decode(h) {
+                    let hex: String = decoded.iter().map(|n| format!("{:02x}", n)).collect();
+                    if hex == hash {
+                        bar.println(format!(
+                            "{} hash decoded and cracked {} -> {} -> {}",
+                            star.green(),
+                            h,
+                            hex,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
+    if hash_type == "sha256-base64" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            let hash = hashes::sha256::crack(w);
+            for h in hashes {
+                if let Ok(decoded) = general_purpose::STANDARD.decode(h) {
+                    let hex: String = decoded.iter().map(|n| format!("{:02x}", n)).collect();
+                    if hex == hash {
+                        bar.println(format!(
+                            "{} hash decoded and cracked {} -> {} -> {}",
+                            star.green(),
+                            h,
+                            hex,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
+    if hash_type == "sha512-base64" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            let hash = hashes::sha512::crack(w);
+            for h in hashes {
+                if let Ok(decoded) = general_purpose::STANDARD.decode(h) {
+                    let hex: String = decoded.iter().map(|n| format!("{:02x}", n)).collect();
+                    if hex == hash {
+                        bar.println(format!(
+                            "{} hash decoded and cracked {} -> {} -> {}",
+                            star.green(),
+                            h,
+                            hex,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
+    if hash_type == "sha3-256-base64" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            let hash = hashes::sha3_256::crack(w);
+            for h in hashes {
+                if let Ok(decoded) = general_purpose::STANDARD.decode(h) {
+                    let hex: String = decoded.iter().map(|n| format!("{:02x}", n)).collect();
+                    if hex == hash {
+                        bar.println(format!(
+                            "{} hash decoded and cracked {} -> {} -> {}",
+                            star.green(),
+                            h,
+                            hex,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
+    if hash_type == "sha3-512-base64" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            let hash = hashes::sha3_512::crack(w);
+            for h in hashes {
+                if let Ok(decoded) = general_purpose::STANDARD.decode(h) {
+                    let hex: String = decoded.iter().map(|n| format!("{:02x}", n)).collect();
+                    if hex == hash {
+                        bar.println(format!(
+                            "{} hash decoded and cracked {} -> {} -> {}",
+                            star.green(),
+                            h,
+                            hex,
+                            w
+                        ));
+                        found.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
     // .par_bridge, iterates in paralel, for_each (each line, it's a word)
     wordlist.lines().par_bridge().for_each(|word| {
         bar.inc(1);
