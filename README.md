@@ -184,6 +184,7 @@ brutecraber/
 - [x] Rule-based transformations (leet speak, capitalize, append numbers)
 - [x] SIMD optimizations & chunked parallel processing
 - [ ] Output results to file (`-o`)
+- [ ] CI/CD pipeline (cargo test, clippy, rustfmt)
 - [ ] Argon2 support (modern password hashing)
 - [ ] scrypt support (crypto wallets, passwords)
 - [ ] PBKDF2 support (enterprise standard, WiFi WPA)
