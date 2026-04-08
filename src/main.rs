@@ -9,7 +9,7 @@ use colored::Colorize;
 use std::fs;
 
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
-#[command(name = "brutecraber", version = "0.8.0")]
+#[command(name = "brutecraber", version = "0.8.1")]
 struct Args {
     #[arg(
         short = 'f',
@@ -70,7 +70,7 @@ fn banner() {
             .truecolor(222, 74, 31)
     );
     println!("                                                Author: erikgavs");
-    println!("                                                v0.8.0");
+    println!("                                                v0.8.1");
     println!();
     println!(
         " [!] DISCLAIMER: This software is provided for ethical hacking and penetration testing"
