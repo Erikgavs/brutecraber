@@ -15,7 +15,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-DE4A1F?logo=rust)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.8.0-orange)](https://github.com/erikgavs/brutecraber/releases)
+[![Version](https://img.shields.io/badge/version-0.8.1-orange)](https://github.com/erikgavs/brutecraber/releases)
 [![crates.io](https://img.shields.io/crates/v/brutecraber.svg)](https://crates.io/crates/brutecraber)
 
 Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for parallel processing across all CPU cores.
@@ -32,6 +32,17 @@ Crack hashes using wordlist-based dictionary attacks. Powered by `rayon` for par
 - **Simple** — One command. No config files. No setup.
 - **Smart** — Auto-detects hash types. Just point it at a file and go.
 - **20 modes** — Hex, Base64, Salted, Bcrypt, NTLM, SHA3-256 and SHA3-512 support.
+
+---
+
+## Performance
+
+v0.8.1 introduces SIMD optimizations and chunked parallel processing:
+- **20-60% faster** multi-threaded cracking
+- SIMD-accelerated hex decoding
+- Hardware SHA instructions on supported CPUs (SHA-NI)
+
+Run `--benchmark` to measure performance on your hardware.
 
 ---
 
@@ -169,10 +180,13 @@ brutecraber/
 - [x] Progress bar with `indicatif`
 - [x] Bcrypt support
 - [x] NTLM hash support
-- [ ] Output results to file (`-o`)
 - [x] Benchmark mode (`--benchmark`)
-- [ ] Statistics (time, hashes/sec)
 - [x] Rule-based transformations (leet speak, capitalize, append numbers)
+- [x] SIMD optimizations & chunked parallel processing
+- [ ] Output results to file (`-o`)
+- [ ] GPU acceleration (OpenCL/CUDA)
+- [ ] Base64 & salt decoding optimization
+- [ ] SIMD multi-buffer hashing (hash 4-8 passwords simultaneously)
 
 ---
 
