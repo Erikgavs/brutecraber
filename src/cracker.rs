@@ -56,6 +56,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         "sha3-512-base64",
         "sha3-512-salt",
         "sha512/sha3-512",
+        "argon2",
         "bcrypt",
         "ntlm",
     ];
@@ -564,6 +565,19 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         parallel_crack(wordlist, rule, &bar, |w| {
             for h in hashes {
                 if hashes::bcrypt::crack(w, h) {
+                    bar.println(format!("{} hash cracked {} -> {}", star.green(), h, w));
+                    found.fetch_add(1, Ordering::Relaxed);
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
+    if hash_type == "argon2" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            for h in hashes {
+                if hashes::argon2::verify(w, h) {
                     bar.println(format!("{} hash cracked {} -> {}", star.green(), h, w));
                     found.fetch_add(1, Ordering::Relaxed);
                 }
