@@ -1,8 +1,8 @@
+mod benchmark;
 mod cracker;
 mod detector;
 mod hashes;
 mod rules;
-mod benchmark;
 
 use clap::Parser;
 use colored::Colorize;
@@ -91,8 +91,7 @@ fn banner() {
 fn main() -> anyhow::Result<()> {
     banner();
 
-    let good_star = "[*]";
-    let bad_star = "[*]";
+    let star = "[*]";
 
     let args = Args::parse();
 
@@ -132,11 +131,11 @@ fn main() -> anyhow::Result<()> {
     if args.hash == "auto" {
         println!(
             "{} Auto detected hash: {}\n",
-            good_star.green(),
+            star.green(),
             auto_detect.yellow()
         );
     } else {
-        println!("Selected hash: {}\n", auto_detect.green());
+        println!("{} Selected hash: {}\n", star, auto_detect.green());
     }
 
     let found = cracker::run(&hashes, &wordlist, &auto_detect, args.rules);
@@ -144,14 +143,9 @@ fn main() -> anyhow::Result<()> {
     println!();
 
     if found == 0 {
-        println!("{} failed cracking hashes or bad file\n", bad_star.red());
+        println!("{} failed cracking hashes or bad file\n", star.red());
     } else {
-        println!(
-            "{} cracked {}/{} hashes",
-            good_star.green(),
-            found,
-            hashes.len()
-        );
+        println!("{} cracked {}/{} hashes", star.green(), found, hashes.len());
     }
 
     Ok(())

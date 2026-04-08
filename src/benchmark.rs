@@ -35,8 +35,18 @@ fn run_single_suite(input: &str, iterations: usize) {
     run_single("SHA1", crate::hashes::sha1_hash::crack, input, iterations);
     run_single("SHA256", crate::hashes::sha256::crack, input, iterations);
     run_single("SHA512", crate::hashes::sha512::crack, input, iterations);
-    run_single("SHA3-256", crate::hashes::sha3_256::crack, input, iterations);
-    run_single("SHA3-512", crate::hashes::sha3_512::crack, input, iterations);
+    run_single(
+        "SHA3-256",
+        crate::hashes::sha3_256::crack,
+        input,
+        iterations,
+    );
+    run_single(
+        "SHA3-512",
+        crate::hashes::sha3_512::crack,
+        input,
+        iterations,
+    );
 }
 
 fn run_parallel_suite(input: &str, iterations: usize) {
@@ -44,13 +54,23 @@ fn run_parallel_suite(input: &str, iterations: usize) {
     run_parallel("SHA1", crate::hashes::sha1_hash::crack, input, iterations);
     run_parallel("SHA256", crate::hashes::sha256::crack, input, iterations);
     run_parallel("SHA512", crate::hashes::sha512::crack, input, iterations);
-    run_parallel("SHA3-256", crate::hashes::sha3_256::crack, input, iterations);
-    run_parallel("SHA3-512", crate::hashes::sha3_512::crack, input, iterations);
+    run_parallel(
+        "SHA3-256",
+        crate::hashes::sha3_256::crack,
+        input,
+        iterations,
+    );
+    run_parallel(
+        "SHA3-512",
+        crate::hashes::sha3_512::crack,
+        input,
+        iterations,
+    );
 }
 
-fn run_single<F>(name: &str, func: F, input: &str, iterations: usize)
+fn run_single<F, T>(name: &str, func: F, input: &str, iterations: usize)
 where
-    F: Fn(&str) -> String,
+    F: Fn(&str) -> T,
 {
     for _ in 0..10_000 {
         func(input);
@@ -66,9 +86,9 @@ where
     print_result(name, iterations, duration);
 }
 
-fn run_parallel<F>(name: &str, func: F, input: &str, iterations: usize)
+fn run_parallel<F, T>(name: &str, func: F, input: &str, iterations: usize)
 where
-    F: Fn(&str) -> String + Sync + Send,
+    F: Fn(&str) -> T + Sync + Send,
 {
     (0..10_000).into_par_iter().for_each(|_| {
         func(input);
