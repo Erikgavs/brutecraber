@@ -184,6 +184,10 @@ brutecraber/
 - [x] Rule-based transformations (leet speak, capitalize, append numbers)
 - [x] SIMD optimizations & chunked parallel processing
 - [ ] Output results to file (`-o`)
+- [ ] Argon2 support (modern password hashing)
+- [ ] scrypt support (crypto wallets, passwords)
+- [ ] PBKDF2 support (enterprise standard, WiFi WPA)
+- [ ] Realistic benchmark mode (wordlist simulation)
 - [ ] GPU acceleration (OpenCL/CUDA)
 - [ ] Base64 & salt decoding optimization
 - [ ] SIMD multi-buffer hashing (hash 4-8 passwords simultaneously)
