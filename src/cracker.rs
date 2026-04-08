@@ -14,10 +14,9 @@ fn hex_to_bytes(hex: &str) -> Option<Vec<u8>> {
 
     // Iterate every 2 chars (0, 2, 4, 6...) and convert hex pairs to bytes
     // Example: "5f4d" -> ["5f", "4d"] -> [0x5f, 0x4d] -> [95, 77]
-    (0..hex.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).ok())
-        .collect()
+    let mut bytes = vec![0u8; hex.len() / 2];
+    faster_hex::hex_decode(hex.as_bytes(), &mut bytes).ok()?;
+    Some(bytes)
 }
 
 pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usize {
