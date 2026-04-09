@@ -1,5 +1,5 @@
 use crate::hashes;
-use base64::{engine::general_purpose, Engine};
+use base64::{Engine, engine::general_purpose};
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 fn hex_to_bytes(hex: &str) -> Option<Vec<u8>> {
     // Validate even length (each byte = 2 hex chars)
-    if hex.len() % 2 != 0 {
+    if !hex.len().is_multiple_of(2) {
         return None;
     }
 
