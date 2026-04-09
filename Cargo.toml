@@ -26,3 +26,4 @@ scrypt = "0.11.0"
 
 [dev-dependencies]
 argon2 = { version = "0.5.3", features = ["password-hash", "rand"] }
+scrypt = { version = "0.11.0", features = ["password-hash"] }
