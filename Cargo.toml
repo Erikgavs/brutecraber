@@ -26,7 +26,9 @@ sha3 = "0.10.8"
 num_cpus = "1.17.0"
 faster-hex = "0.10.0"
 argon2 = "0.5.3"
+scrypt = "0.11.0"
 opencl3 = { version = "0.10", optional = true }
 
 [dev-dependencies]
 argon2 = { version = "0.5.3", features = ["password-hash", "rand"] }
+scrypt = { version = "0.11.0", features = ["password-hash"] }

@@ -1,4 +1,8 @@
 pub fn detect(hash: &str) -> &str {
+    if hash.starts_with("$scrypt") {
+        return "scrypt";
+    }
+
     if hash.starts_with("$argon2") {
         return "argon2";
     }

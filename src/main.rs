@@ -34,7 +34,7 @@ struct Args {
     #[arg(
         short = 't',
         default_value = "auto",
-        help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt, sha3-256, sha3-256-base64, sha3-256-salt, sha3-512, sha3-512-base64, sha3-512-salt, bcrypt, ntlm, argon2"
+        help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt, sha3-256, sha3-256-base64, sha3-256-salt, sha3-512, sha3-512-base64, sha3-512-salt, bcrypt, ntlm, argon2, scrypt"
     )]
     hash: String,
 
