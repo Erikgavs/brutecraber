@@ -34,7 +34,7 @@ struct Args {
     #[arg(
         short = 't',
         default_value = "auto",
-        help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt, sha3-256, sha3-256-base64, sha3-256-salt, sha3-512, sha3-512-base64, sha3-512-salt, bcrypt, ntlm, argon2, scrypt"
+        help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt, sha3-256, sha3-256-base64, sha3-256-salt, sha3-512, sha3-512-base64, sha3-512-salt, bcrypt, ntlm, argon2, scrypt, pbkdf2"
     )]
     hash: String,
 
@@ -95,7 +95,7 @@ fn banner() {
     println!("     without prior consent is a violation of applicable laws. Use at your own risk.");
     println!();
     println!(
-        " {} MD5 · SHA1 · SHA256 · SHA512 · SHA3-256 · SHA3-512 · Bcrypt · NTLM · Argon2  {} hex · base64 · salted",
+        " {} MD5 · SHA1 · SHA256 · SHA512 · SHA3-256 · SHA3-512 · Bcrypt · NTLM · Argon2 · PBKDF2  {} hex · base64 · salted",
         "Supported:".truecolor(222, 74, 31),
         "Modes:".truecolor(222, 74, 31)
     );
