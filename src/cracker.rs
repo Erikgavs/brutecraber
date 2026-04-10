@@ -1,5 +1,5 @@
 use crate::hashes;
-use base64::{Engine, engine::general_purpose};
+use base64::{engine::general_purpose, Engine};
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
