@@ -160,7 +160,7 @@ fn main() -> anyhow::Result<()> {
                 CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
             } else if !gpu_backend::supports(&auto_detect) {
                 println!(
-                    " {} hash {} not supported on GPU, using CPU",
+                    "{} hash {} not supported on GPU, using CPU",
                     "[*]".yellow(),
                     auto_detect
                 );
@@ -173,7 +173,7 @@ fn main() -> anyhow::Result<()> {
                     }
                     Err(e) => {
                         println!(
-                            " {} GPU unavailable ({}), falling back to CPU",
+                            "{} GPU unavailable ({}), falling back to CPU",
                             "[!]".yellow(),
                             e
                         );
