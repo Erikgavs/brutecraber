@@ -145,32 +145,46 @@ fn main() -> anyhow::Result<()> {
         println!("{} Selected hash: {}\n", star, auto_detect.green());
     }
 
-    #[cfg(feature = "gpu")]
-    if args.gpu {
-        use crate::gpu_backend::GpuBackend;
+    let force_cpu = std::env::var("BRUTECRABER_CPU").is_ok();
 
-        let gpu = match GpuBackend::new() {
-            Ok(g) => g,
-            Err(e) => {
-                eprintln!(" {} {}", "[!]".red(), e);
-                return Err(anyhow::anyhow!(e));
+    let found = {
+        #[cfg(feature = "gpu")]
+        {
+            use crate::gpu_backend::{self, GpuBackend};
+
+            if force_cpu {
+                println!(" {} BRUTECRABER_CPU set, using CPU", "[*]".yellow());
+                CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+            } else if !gpu_backend::supports(&auto_detect) {
+                println!(
+                    " {} hash {} not supported on GPU, using CPU",
+                    "[*]".yellow(),
+                    auto_detect
+                );
+                CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+            } else {
+                match GpuBackend::new() {
+                    Ok(gpu) => {
+                        gpu.print_device_info();
+                        gpu.run(&hashes, &wordlist, &auto_detect, args.rules)
+                    }
+                    Err(e) => {
+                        println!(
+                            " {} GPU unavailable ({}), falling back to CPU",
+                            "[!]".yellow(),
+                            e
+                        );
+                        CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+                    }
+                }
             }
-        };
-        gpu.print_device_info();
-
-        let found = gpu.run(&hashes, &wordlist, &auto_detect, args.rules);
-
-        println!();
-        if found == 0 {
-            println!("{} failed cracking hashes or bad file\n", star.red());
-        } else {
-            println!("{} cracked {}/{} hashes", star.green(), found, hashes.len());
         }
-        return Ok(());
-    }
-
-    let backend = CpuBackend;
-    let found = backend.run(&hashes, &wordlist, &auto_detect, args.rules);
+        #[cfg(not(feature = "gpu"))]
+        {
+            let _ = force_cpu;
+            CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+        }
+    };
 
     println!();
 
