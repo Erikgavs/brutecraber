@@ -43,6 +43,9 @@ struct Args {
 
     #[arg(long = "benchmark", default_value_t = false)]
     benchmark: bool,
+
+    #[arg(long = "cpu", default_value_t = false, help = "Force CPU backend")]
+    cpu: bool,
 }
 
 fn banner() {
