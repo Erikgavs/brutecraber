@@ -43,14 +43,6 @@ struct Args {
 
     #[arg(long = "benchmark", default_value_t = false)]
     benchmark: bool,
-
-    #[cfg(feature = "gpu")]
-    #[arg(
-        long = "gpu",
-        default_value_t = false,
-        help = "Use GPU acceleration (OpenCL)"
-    )]
-    gpu: bool,
 }
 
 fn banner() {
