@@ -156,11 +156,11 @@ fn main() -> anyhow::Result<()> {
             use crate::gpu_backend::{self, GpuBackend};
 
             if force_cpu {
-                println!("{} --cpu flag set, using CPU \n", "[*]".yellow());
+                println!("{} --cpu flag set, using CPU\n", "[*]".yellow());
                 CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
             } else if !gpu_backend::supports(&auto_detect) {
                 println!(
-                    "{} hash {} not supported on GPU, using CPU",
+                    "{} hash {} not supported on GPU, using CPU\n",
                     "[*]".yellow(),
                     auto_detect
                 );
@@ -173,7 +173,7 @@ fn main() -> anyhow::Result<()> {
                     }
                     Err(e) => {
                         println!(
-                            "{} GPU unavailable ({}), falling back to CPU",
+                            "{} GPU unavailable ({}), falling back to CPU\n",
                             "[!]".yellow(),
                             e
                         );

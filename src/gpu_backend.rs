@@ -77,13 +77,12 @@ impl GpuBackend {
         let mem_mb = mem_bytes / (1024 * 1024);
 
         println!(
-            " {} GPU: {} | VRAM: {} MB | Compute Units: {}",
+            "{} GPU: {} | VRAM: {} MB | Compute Units: {}\n",
             "[*]".green(),
             name.trim().yellow(),
             mem_mb,
             cu
         );
-        println!();
     }
 
     fn gpu_mem_bytes(&self) -> u64 {
