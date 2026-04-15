@@ -49,11 +49,11 @@ impl GpuBackend {
 
         for &did in &device_ids {
             let dev = Device::new(did);
-            if let Ok(cu) = dev.max_compute_units() {
-                if cu > best_cu {
-                    best_cu = cu;
-                    best_id = did;
-                }
+            if let Ok(cu) = dev.max_compute_units()
+                && cu > best_cu
+            {
+                best_cu = cu;
+                best_id = did;
             }
         }
 
@@ -91,6 +91,7 @@ impl GpuBackend {
 
     /// Generic hash cracking method that works for any algorithm.
     /// All GPU-supported algorithms share the same kernel interface.
+    #[allow(clippy::too_many_arguments)]
     fn crack_hash(
         &self,
         hashes: &[&str],
@@ -251,6 +252,7 @@ impl GpuBackend {
     }
 
     /// Generic GPU batch execution — kernel interface is the same for all algorithms.
+    #[allow(clippy::too_many_arguments)]
     fn execute_hash_batch(
         &self,
         kernel: &Kernel,
@@ -475,7 +477,7 @@ impl CrackingBackend for GpuBackend {
             );
             expanded_wordlist = wordlist
                 .lines()
-                .flat_map(|word| crate::rules::apply(word))
+                .flat_map(crate::rules::apply)
                 .collect::<Vec<_>>()
                 .join("\n");
             expanded_wordlist.as_str()
