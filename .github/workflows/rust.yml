@@ -1,4 +1,4 @@
-name: Release Pipeline
+name: Build & Release Pipeline
 
 on:
   workflow_dispatch:
@@ -19,6 +19,8 @@ jobs:
       # 🦀 Setup Rust
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
 
       # ⚡ Cache (refined)
       - name: Cache dependencies
@@ -51,12 +53,36 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
-      # 🧪 Validate build (NEW - important)
-      - name: Run checks
+      # 🔐 Security audit
+      - name: Security audit (cargo-audit)
+        run: |
+          set -euo pipefail
+          cargo install cargo-audit --locked
+          cargo audit
+
+      # 🎨 Formatting check
+      - name: Check formatting
+        run: |
+          set -euo pipefail
+          cargo fmt --all -- --check
+
+      # 🧠 Linting
+      - name: Run clippy
+        run: |
+          set -euo pipefail
+          cargo clippy --all-targets --all-features -- -D warnings
+
+      # ⚙️ Build validation
+      - name: Cargo check
         run: |
           set -euo pipefail
           cargo check --locked
-          cargo test --locked --no-run
+
+      # 🧪 Test execution
+      - name: Run tests
+        run: |
+          set -euo pipefail
+          cargo test --all --verbose
 
       # 🏗️ Build
       - name: Build binary
