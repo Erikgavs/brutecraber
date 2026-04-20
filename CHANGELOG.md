@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.9.0] - 2026-04-20
+
+### Added
+- **GPU acceleration via OpenCL** — kernels for MD5, SHA1, SHA256, SHA512, SHA3-256, SHA3-512 and NTLM
+- **Automatic backend selection** — GPU is used by default when available; transparent fallback to CPU if OpenCL is missing, the device fails to initialize, or the hash type is not GPU-supported
+- `--cpu` flag to force the CPU backend
+- **Argon2** hash cracking support
+- **Scrypt** hash cracking support
+- **PBKDF2** hash cracking support
+- `CrackingBackend` trait and `CpuBackend` / `GpuBackend` abstraction
+- GPU-side rules support and dual-mode hash types
+- GPU test suite with CPU-vs-GPU correctness checks
+- Auto-detector now recognizes Argon2, Bcrypt, Scrypt and PBKDF2
+- CI workflow for PRs (`ci.yml`): fmt, clippy and tests on every pull request
+- Release pipeline hardening (`rust.yml`): `cargo audit`, fmt, clippy and tests before packaging
+
+### Changed
+- `gpu` feature is now enabled by default; CPU-only builds available with `--no-default-features`
+- Banner and help text refreshed; backend selection messages unified
+- Benchmark path simplified — uses the active feature set directly
+
+### Contributors
+- @piny4man — initial GPU experiment and OpenCL backend (#53)
+- @aniketchavan2211 — release pipeline hardening with `cargo audit` (#57)
+
 ## [0.8.1] - 2026-04-08
 
 ### Performance
