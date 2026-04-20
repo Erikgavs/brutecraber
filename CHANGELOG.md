@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Release pipeline hardening (`rust.yml`): `cargo audit`, fmt, clippy and tests before packaging
 
 ### Changed
+- **License changed from GPL-3.0 to MIT**
 - `gpu` feature is now enabled by default; CPU-only builds available with `--no-default-features`
 - Banner and help text refreshed; backend selection messages unified
 - Benchmark path simplified — uses the active feature set directly
