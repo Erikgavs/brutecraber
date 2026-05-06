@@ -46,6 +46,13 @@ struct Args {
 
     #[arg(long = "cpu", default_value_t = false, help = "Force CPU backend")]
     cpu: bool,
+
+    #[arg(
+        long = "ui",
+        default_value_t = false,
+        help = "enable terminal interface"
+    )]
+    ui: bool,
 }
 
 fn banner() {
