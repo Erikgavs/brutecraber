@@ -21,14 +21,14 @@ struct Args {
     #[arg(
         short = 'f',
         help = "Path to file containing hashes",
-        required_unless_present = "benchmark"
+        required_unless_present_any = ["benchmark", "ui"]
     )]
     file: Option<String>,
 
     #[arg(
         short = 'w',
         help = "Path to wordlist file",
-        required_unless_present = "benchmark"
+        required_unless_present_any = ["benchmark", "ui"]
     )]
     wordlist: Option<String>,
 
@@ -111,6 +111,11 @@ fn main() -> anyhow::Result<()> {
     let star = "[*]";
 
     let args = Args::parse();
+
+    if args.ui {
+        tui::run()?;
+        return Ok(());
+    }
 
     if args.benchmark {
         let use_gpu = cfg!(feature = "gpu");
