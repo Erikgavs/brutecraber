@@ -7,6 +7,7 @@ mod detector;
 mod gpu_backend;
 mod hashes;
 mod rules;
+mod tui;
 
 use crate::backend::CrackingBackend;
 use crate::cpu_backend::CpuBackend;
