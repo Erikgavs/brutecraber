@@ -1,3 +1,4 @@
+use ratatui::widgets::Paragraph;
 use std::io;
 use std::time::Duration;
 
