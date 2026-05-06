@@ -19,7 +19,20 @@ pub fn run() -> io::Result<()> {
 
     let mut terminal = Terminal::new(backend)?;
 
-    // loop (empty for now)
+    loop {
+        terminal.draw(|frame| {
+            let area = frame.area();
+            frame.render_widget(Paragraph::new("Brutecraber TUI - pulse q for exit"), area);
+        })?;
+
+        if event::poll(Duration::from_millis(100))? {
+            if let Event::Key(key) = event::read()? {
+                if key.code == KeyCode::Char('q') {
+                    break;
+                }
+            }
+        }
+    }
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
