@@ -1,7 +1,6 @@
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use ratatui::widgets::{Block, Borders};
 use std::io;
 use std::time::Duration;
 
@@ -29,7 +28,38 @@ impl App {
     }
 }
 
+// autocompletition helper
 
+fn list_path_matches(input: &str) -> Vec<String> {
+    let (dir_to_read, prefix, dir_to_keep) = match input.rfind('/') {
+        Some(i) => (&input[..=i], &input[i + 1..], &input[..=i]),
+        None => (".", input, ""),
+    };
+
+    let entries = match std::fs::read_dir(dir_to_read) {
+        Ok(e) => e,
+        Err(_) => return Vec::new(),
+    };
+
+    entries
+        .filter_map(|e| e.ok())
+        .filter_map(|e| {
+            let name = e.file_name().into_string().ok()?;
+            if name.starts_with(prefix) {
+                let suffix = if e.file_type().ok()?.is_dir() { "/" } else { "" };
+                Some(format!("{}{}{}", dir_to_keep, name, suffix))
+            } else {
+                None
+            }
+        })
+        .take(8)
+        .collect()
+}
+
+fn autocomplete_path(input: &str) -> Option<String> {
+    let mut matches = list_path_matches(input);
+    if matches.len() == 1 { matches.pop() } else { None }
+}
 
 pub fn run() -> io::Result<()> {
     enable_raw_mode()?;
@@ -45,8 +75,6 @@ pub fn run() -> io::Result<()> {
     loop {
         terminal.draw(|frame| {
             let area = frame.area();
-
-            let text = format!("file: {}", app.file);
 
             let orange = Style::default().fg(Color::Rgb(222, 74, 31));
 
@@ -66,7 +94,19 @@ pub fn run() -> io::Result<()> {
                 Line::from(format!("  wordlist: {}", app.wordlist))
             };
 
-            frame.render_widget(Paragraph::new(vec![file_line, word_line]), area);
+            let active = if app.on_wordlist { &app.wordlist } else { &app.file };
+            let suggestions = if active.is_empty() {
+                Vec::new()
+            } else {
+                list_path_matches(active)
+            };
+
+            let mut lines = vec![file_line, word_line, Line::from("")];
+            for s in &suggestions {
+                lines.push(Line::from(format!("    · {}", s)));
+            }
+
+            frame.render_widget(Paragraph::new(lines), area);
         })?;
 
         if event::poll(Duration::from_millis(100))? {
@@ -79,6 +119,16 @@ pub fn run() -> io::Result<()> {
                             app.wordlist.push(c);
                         } else {
                             app.file.push(c);
+                        }
+                    }
+                    KeyCode::Right => {
+                        let target = if app.on_wordlist {
+                            &mut app.wordlist
+                        } else {
+                            &mut app.file
+                        };
+                        if let Some(completed) = autocomplete_path(target) {
+                            *target = completed
                         }
                     }
                     KeyCode::Backspace => {
