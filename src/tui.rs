@@ -12,10 +12,16 @@ use crossterm::terminal::{
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Field {
+    File,
+    Wordlist,
+}
+
 struct App {
     file: String,
     wordlist: String,
-    on_wordlist: bool,
+    focused: Field,
 }
 
 impl App {
@@ -23,7 +29,7 @@ impl App {
         Self {
             file: String::new(),
             wordlist: String::new(),
-            on_wordlist: false,
+            focused: Field::File,
         }
     }
 }
@@ -87,13 +93,13 @@ pub fn run() -> io::Result<()> {
             let orange = Style::default().fg(Color::Rgb(222, 74, 31));
 
             // if we are writing in file = orange, if not normal
-            let file_line = if !app.on_wordlist {
+            let file_line = if app.focused == Field::File {
                 Line::from(Span::styled(format!("> file: {}", app.file), orange))
             } else {
                 Line::from(format!("  file: {}", app.file))
             };
 
-            let word_line = if app.on_wordlist {
+            let word_line = if app.focused == Field::Wordlist {
                 Line::from(Span::styled(
                     format!("> wordlist: {}", app.wordlist),
                     orange,
@@ -102,7 +108,7 @@ pub fn run() -> io::Result<()> {
                 Line::from(format!("  wordlist: {}", app.wordlist))
             };
 
-            let active = if app.on_wordlist {
+            let active = if app.focused == Field::Wordlist {
                 &app.wordlist
             } else {
                 &app.file
@@ -125,16 +131,21 @@ pub fn run() -> io::Result<()> {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Esc => break,
-                    KeyCode::Tab => app.on_wordlist = !app.on_wordlist,
+                    KeyCode::Tab => {
+                        app.focused = match app.focused {
+                            Field::File => Field::Wordlist,
+                            Field::Wordlist => Field::File,
+                        };
+                    }
                     KeyCode::Char(c) => {
-                        if app.on_wordlist {
+                        if app.focused == Field::Wordlist {
                             app.wordlist.push(c);
                         } else {
                             app.file.push(c);
                         }
                     }
                     KeyCode::Right => {
-                        let target = if app.on_wordlist {
+                        let target = if app.focused == Field::Wordlist {
                             &mut app.wordlist
                         } else {
                             &mut app.file
@@ -144,7 +155,7 @@ pub fn run() -> io::Result<()> {
                         }
                     }
                     KeyCode::Backspace => {
-                        if app.on_wordlist {
+                        if app.focused == Field::Wordlist {
                             app.wordlist.pop();
                         } else {
                             app.file.pop();
