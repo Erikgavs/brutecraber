@@ -140,7 +140,7 @@ pub fn run() -> io::Result<()> {
 
             let cpu_txt = format!(
                 "cpu:   {}",
-                if app.cpu { "[x] force CPU" } else { "[ ] auto" }
+                if app.cpu { "[x] force CPU" } else { "[ ] GPU" }
             );
             let cpu_line = if app.focused == Field::Cpu {
                 Line::from(Span::styled(format!("> {}", cpu_txt), orange))
