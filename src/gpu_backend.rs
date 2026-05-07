@@ -420,14 +420,21 @@ impl GpuBackend {
 }
 
 impl CrackingBackend for GpuBackend {
-    fn run(&self, hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usize {
+    fn run(
+        &self,
+        hashes: &[&str],
+        wordlist: &str,
+        hash_type: &str,
+        rule: bool,
+        reporter: &crate::reporter::Reporter,
+    ) -> usize {
         // Memory-hard algorithms: not suited for GPU
         if hash_type == "bcrypt" {
             println!(
                 " {} bcrypt is a memory-hard algorithm not suited for GPU acceleration. Falling back to CPU.",
                 "[!]".yellow()
             );
-            return CpuBackend.run(hashes, wordlist, hash_type, rule);
+            return CpuBackend.run(hashes, wordlist, hash_type, rule, reporter);
         }
 
         if hash_type == "argon2" {
@@ -435,7 +442,7 @@ impl CrackingBackend for GpuBackend {
                 " {} argon2 is a memory-hard algorithm not suited for GPU acceleration. Falling back to CPU.",
                 "[!]".yellow()
             );
-            return CpuBackend.run(hashes, wordlist, hash_type, rule);
+            return CpuBackend.run(hashes, wordlist, hash_type, rule, reporter);
         }
 
         // Base64 encoded types: GPU supports hex only
@@ -445,7 +452,7 @@ impl CrackingBackend for GpuBackend {
                 "[!]".yellow(),
                 hash_type
             );
-            return CpuBackend.run(hashes, wordlist, hash_type, rule);
+            return CpuBackend.run(hashes, wordlist, hash_type, rule, reporter);
         }
 
         // Salted types: not yet supported on GPU
@@ -454,7 +461,7 @@ impl CrackingBackend for GpuBackend {
                 " {} GPU acceleration does not yet support salted hashes. Falling back to CPU.",
                 "[!]".yellow()
             );
-            return CpuBackend.run(hashes, wordlist, hash_type, rule);
+            return CpuBackend.run(hashes, wordlist, hash_type, rule, reporter);
         }
 
         // Unsupported hex type (check before dual-mode, since dual-mode components are supported)
@@ -465,7 +472,7 @@ impl CrackingBackend for GpuBackend {
                 "[!]".yellow(),
                 hash_type
             );
-            return CpuBackend.run(hashes, wordlist, hash_type, rule);
+            return CpuBackend.run(hashes, wordlist, hash_type, rule, reporter);
         }
 
         // Rules: expand wordlist on CPU, then dispatch to GPU
@@ -595,7 +602,7 @@ impl CrackingBackend for GpuBackend {
                 );
                 found_sha512 + found_sha3
             }
-            _ => CpuBackend.run(hashes, wordlist, hash_type, rule),
+            _ => CpuBackend.run(hashes, wordlist, hash_type, rule, reporter),
         }
     }
 }
@@ -612,6 +619,7 @@ mod tests {
     use super::*;
     use crate::backend::CrackingBackend;
     use crate::cpu_backend::CpuBackend;
+    use crate::reporter::Reporter;
 
     fn init_gpu() -> GpuBackend {
         GpuBackend::new().expect("GPU required — run with: cargo test --features gpu -- --ignored")
@@ -996,8 +1004,8 @@ mod tests {
         let hashes: Vec<&str> = hc.lines().collect();
         let wordlist = read_fixture("tests/wordlists/wordlist.txt");
 
-        let cpu = CpuBackend.run(&hashes, &wordlist, "md5", false);
-        let gpu_found = init_gpu().run(&hashes, &wordlist, "md5", false);
+        let cpu = CpuBackend.run(&hashes, &wordlist, "md5", false, &Reporter::silent());
+        let gpu_found = init_gpu().run(&hashes, &wordlist, "md5", false, &Reporter::silent());
         assert_eq!(
             cpu, gpu_found,
             "MD5: CPU cracked {cpu} but GPU cracked {gpu_found}"
@@ -1011,8 +1019,8 @@ mod tests {
         let hashes: Vec<&str> = hc.lines().collect();
         let wordlist = read_fixture("tests/wordlists/wordlist.txt");
 
-        let cpu = CpuBackend.run(&hashes, &wordlist, "sha1", false);
-        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha1", false);
+        let cpu = CpuBackend.run(&hashes, &wordlist, "sha1", false, &Reporter::silent());
+        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha1", false, &Reporter::silent());
         assert_eq!(
             cpu, gpu_found,
             "SHA1: CPU cracked {cpu} but GPU cracked {gpu_found}"
@@ -1026,8 +1034,8 @@ mod tests {
         let hashes: Vec<&str> = hc.lines().collect();
         let wordlist = read_fixture("tests/wordlists/wordlist.txt");
 
-        let cpu = CpuBackend.run(&hashes, &wordlist, "sha256", false);
-        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha256", false);
+        let cpu = CpuBackend.run(&hashes, &wordlist, "sha256", false, &Reporter::silent());
+        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha256", false, &Reporter::silent());
         assert_eq!(
             cpu, gpu_found,
             "SHA256: CPU cracked {cpu} but GPU cracked {gpu_found}"
@@ -1041,8 +1049,8 @@ mod tests {
         let hashes: Vec<&str> = hc.lines().collect();
         let wordlist = read_fixture("tests/wordlists/wordlist.txt");
 
-        let cpu = CpuBackend.run(&hashes, &wordlist, "sha512", false);
-        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha512", false);
+        let cpu = CpuBackend.run(&hashes, &wordlist, "sha512", false, &Reporter::silent());
+        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha512", false, &Reporter::silent());
         assert_eq!(
             cpu, gpu_found,
             "SHA512: CPU cracked {cpu} but GPU cracked {gpu_found}"
@@ -1061,8 +1069,8 @@ mod tests {
         let hash_refs: Vec<&str> = hashes.iter().map(|s| s.as_str()).collect();
         let wordlist = words.join("\n");
 
-        let cpu = CpuBackend.run(&hash_refs, &wordlist, "sha3-256", false);
-        let gpu_found = init_gpu().run(&hash_refs, &wordlist, "sha3-256", false);
+        let cpu = CpuBackend.run(&hash_refs, &wordlist, "sha3-256", false, &Reporter::silent());
+        let gpu_found = init_gpu().run(&hash_refs, &wordlist, "sha3-256", false, &Reporter::silent());
         assert_eq!(
             cpu, gpu_found,
             "SHA3-256: CPU cracked {cpu} but GPU cracked {gpu_found}"
@@ -1082,8 +1090,8 @@ mod tests {
         let hashes: Vec<&str> = hc.lines().collect();
         let wordlist = read_fixture("tests/wordlists/wordlist.txt");
 
-        let cpu = CpuBackend.run(&hashes, &wordlist, "sha3-512", false);
-        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha3-512", false);
+        let cpu = CpuBackend.run(&hashes, &wordlist, "sha3-512", false, &Reporter::silent());
+        let gpu_found = init_gpu().run(&hashes, &wordlist, "sha3-512", false, &Reporter::silent());
         assert_eq!(
             cpu, gpu_found,
             "SHA3-512: CPU cracked {cpu} but GPU cracked {gpu_found}"
@@ -1097,8 +1105,8 @@ mod tests {
         let hashes: Vec<&str> = hc.lines().collect();
         let wordlist = read_fixture("tests/wordlists/wordlist.txt");
 
-        let cpu = CpuBackend.run(&hashes, &wordlist, "ntlm", false);
-        let gpu_found = init_gpu().run(&hashes, &wordlist, "ntlm", false);
+        let cpu = CpuBackend.run(&hashes, &wordlist, "ntlm", false, &Reporter::silent());
+        let gpu_found = init_gpu().run(&hashes, &wordlist, "ntlm", false, &Reporter::silent());
         assert_eq!(
             cpu, gpu_found,
             "NTLM: CPU cracked {cpu} but GPU cracked {gpu_found}"

@@ -6,6 +6,7 @@ mod detector;
 #[cfg(feature = "gpu")]
 mod gpu_backend;
 mod hashes;
+mod reporter;
 mod rules;
 mod tui;
 
@@ -112,46 +113,48 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
 
-    if args.ui {
-        tui::run()?;
-        return Ok(());
-    }
-
     if args.benchmark {
         let use_gpu = cfg!(feature = "gpu");
         benchmark::run(use_gpu);
         return Ok(());
     }
 
-    let file = args
-        .file
-        .as_deref()
-        .ok_or_else(|| anyhow::anyhow!("[-] Missing -f (hash file)"))?;
+    if args.ui {
+        tui::run()?;
+        return Ok(());
+    }
 
+    let file_path = args
+        .file
+        .clone()
+        .ok_or_else(|| anyhow::anyhow!("[-] Missing -f (hash file)"))?;
     let wordlist_path = args
         .wordlist
-        .as_deref()
+        .clone()
         .ok_or_else(|| anyhow::anyhow!("[-] Missing -w (wordlist)"))?;
+    let hash_arg = args.hash.clone();
+    let use_rules = args.rules;
+    let force_cpu = args.cpu;
 
-    let content = fs::read_to_string(file)?;
+    let content = fs::read_to_string(&file_path)?;
     let hashes: Vec<&str> = content.lines().collect();
 
-    let bytes = fs::read(wordlist_path)?;
+    let bytes = fs::read(&wordlist_path)?;
     let wordlist = String::from_utf8_lossy(&bytes).to_string();
 
     println!();
-    println!("Selected file: {}", file.green());
+    println!("Selected file: {}", file_path.green());
     println!("Selected wordlist: {}", wordlist_path.green());
     println!();
 
-    let auto_detect = if args.hash == "auto" {
+    let auto_detect = if hash_arg == "auto" {
         let detect_hash = hashes.first().unwrap_or(&"");
         detector::detect(detect_hash).to_string()
     } else {
-        args.hash.clone()
+        hash_arg.clone()
     };
 
-    if args.hash == "auto" {
+    if hash_arg == "auto" {
         println!(
             "{} Auto detected hash: {}\n",
             star.green(),
@@ -161,7 +164,8 @@ fn main() -> anyhow::Result<()> {
         println!("{} Selected hash: {}\n", star, auto_detect.green());
     }
 
-    let force_cpu = args.cpu;
+    let total = wordlist.lines().count() as u64;
+    let reporter = reporter::Reporter::cli(total);
 
     let found = {
         #[cfg(feature = "gpu")]
@@ -170,19 +174,19 @@ fn main() -> anyhow::Result<()> {
 
             if force_cpu {
                 println!("{} --cpu flag set, using CPU\n", "[*]".yellow());
-                CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+                CpuBackend.run(&hashes, &wordlist, &auto_detect, use_rules, &reporter)
             } else if !gpu_backend::supports(&auto_detect) {
                 println!(
                     "{} hash {} not supported on GPU, using CPU\n",
                     "[*]".yellow(),
                     auto_detect
                 );
-                CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+                CpuBackend.run(&hashes, &wordlist, &auto_detect, use_rules, &reporter)
             } else {
                 match GpuBackend::new() {
                     Ok(gpu) => {
                         gpu.print_device_info();
-                        gpu.run(&hashes, &wordlist, &auto_detect, args.rules)
+                        gpu.run(&hashes, &wordlist, &auto_detect, use_rules, &reporter)
                     }
                     Err(e) => {
                         println!(
@@ -190,7 +194,7 @@ fn main() -> anyhow::Result<()> {
                             "[!]".yellow(),
                             e
                         );
-                        CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+                        CpuBackend.run(&hashes, &wordlist, &auto_detect, use_rules, &reporter)
                     }
                 }
             }
@@ -198,7 +202,7 @@ fn main() -> anyhow::Result<()> {
         #[cfg(not(feature = "gpu"))]
         {
             let _ = force_cpu;
-            CpuBackend.run(&hashes, &wordlist, &auto_detect, args.rules)
+            CpuBackend.run(&hashes, &wordlist, &auto_detect, use_rules, &reporter)
         }
     };
 
