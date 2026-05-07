@@ -12,15 +12,26 @@ use crossterm::terminal::{
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
+const HASH_TYPES: &[&str] = &[
+    "auto", "md5", "sha1", "sha256", "sha512", "sha3-256", "sha3-512", "bcrypt", "ntlm", "argon2",
+    "scrypt", "pbkdf2",
+];
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Field {
     File,
     Wordlist,
+    HashType,
+    Rules,
+    Cpu,
 }
 
 struct App {
     file: String,
     wordlist: String,
+    hash_idx: usize,
+    rules: bool,
+    cpu: bool,
     focused: Field,
 }
 
@@ -29,6 +40,9 @@ impl App {
         Self {
             file: String::new(),
             wordlist: String::new(),
+            hash_idx: 0,
+            rules: false,
+            cpu: false,
             focused: Field::File,
         }
     }
@@ -108,18 +122,50 @@ pub fn run() -> io::Result<()> {
                 Line::from(format!("  wordlist: {}", app.wordlist))
             };
 
-            let active = if app.focused == Field::Wordlist {
-                &app.wordlist
+            let hash_line = if app.focused == Field::HashType {
+                Line::from(Span::styled(
+                    format!("> hash: {}", HASH_TYPES[app.hash_idx]),
+                    orange,
+                ))
             } else {
-                &app.file
-            };
-            let suggestions = if active.is_empty() {
-                Vec::new()
-            } else {
-                list_path_matches(active)
+                Line::from(format!("  hash: {}", HASH_TYPES[app.hash_idx]))
             };
 
-            let mut lines = vec![file_line, word_line, Line::from("")];
+            let rules_txt = format!("rules: {}", if app.rules { "[x]" } else { "[ ]" });
+            let rules_line = if app.focused == Field::Rules {
+                Line::from(Span::styled(format!("> {}", rules_txt), orange))
+            } else {
+                Line::from(format!("  {}", rules_txt))
+            };
+
+            let cpu_txt = format!(
+                "cpu:   {}",
+                if app.cpu { "[x] force CPU" } else { "[ ] auto" }
+            );
+            let cpu_line = if app.focused == Field::Cpu {
+                Line::from(Span::styled(format!("> {}", cpu_txt), orange))
+            } else {
+                Line::from(format!("  {}", cpu_txt))
+            };
+
+            let active: Option<&String> = match app.focused {
+                Field::File => Some(&app.file),
+                Field::Wordlist => Some(&app.wordlist),
+                Field::HashType | Field::Rules | Field::Cpu => None,
+            };
+            let suggestions = match active {
+                Some(s) if !s.is_empty() => list_path_matches(s),
+                _ => Vec::new(),
+            };
+
+            let mut lines = vec![
+                file_line,
+                word_line,
+                hash_line,
+                rules_line,
+                cpu_line,
+                Line::from(""),
+            ];
             for s in &suggestions {
                 lines.push(Line::from(format!("    · {}", s)));
             }
@@ -131,36 +177,74 @@ pub fn run() -> io::Result<()> {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Esc => break,
-                    KeyCode::Tab => {
+                    KeyCode::Down => {
                         app.focused = match app.focused {
                             Field::File => Field::Wordlist,
+                            Field::Wordlist => Field::HashType,
+                            Field::HashType => Field::Rules,
+                            Field::Rules => Field::Cpu,
+                            Field::Cpu => Field::File,
+                        };
+                    }
+                    KeyCode::Up => {
+                        app.focused = match app.focused {
+                            Field::File => Field::Cpu,
                             Field::Wordlist => Field::File,
+                            Field::HashType => Field::Wordlist,
+                            Field::Rules => Field::HashType,
+                            Field::Cpu => Field::Rules,
                         };
                     }
-                    KeyCode::Char(c) => {
-                        if app.focused == Field::Wordlist {
-                            app.wordlist.push(c);
-                        } else {
-                            app.file.push(c);
+                    KeyCode::Tab => match app.focused {
+                        Field::File => {
+                            if let Some(c) = autocomplete_path(&app.file) {
+                                app.file = c;
+                            }
+                        }
+                        Field::Wordlist => {
+                            if let Some(c) = autocomplete_path(&app.wordlist) {
+                                app.wordlist = c;
+                            }
+                        }
+                        Field::HashType => {
+                            app.hash_idx = (app.hash_idx + 1) % HASH_TYPES.len();
+                        }
+                        Field::Rules => app.rules = !app.rules,
+                        Field::Cpu => app.cpu = !app.cpu,
+                    },
+                    KeyCode::Char(c) => match app.focused {
+                        Field::File => app.file.push(c),
+                        Field::Wordlist => app.wordlist.push(c),
+                        Field::HashType => {}
+                        Field::Rules => {
+                            if c == ' ' {
+                                app.rules = !app.rules;
+                            }
+                        }
+                        Field::Cpu => {
+                            if c == ' ' {
+                                app.cpu = !app.cpu;
+                            }
+                        }
+                    },
+                    KeyCode::Left => {
+                        if app.focused == Field::HashType {
+                            app.hash_idx = if app.hash_idx == 0 {
+                                HASH_TYPES.len() - 1
+                            } else {
+                                app.hash_idx - 1
+                            };
                         }
                     }
-                    KeyCode::Right => {
-                        let target = if app.focused == Field::Wordlist {
-                            &mut app.wordlist
-                        } else {
-                            &mut app.file
-                        };
-                        if let Some(completed) = autocomplete_path(target) {
-                            *target = completed
-                        }
-                    }
-                    KeyCode::Backspace => {
-                        if app.focused == Field::Wordlist {
-                            app.wordlist.pop();
-                        } else {
+                    KeyCode::Backspace => match app.focused {
+                        Field::File => {
                             app.file.pop();
                         }
-                    }
+                        Field::Wordlist => {
+                            app.wordlist.pop();
+                        }
+                        Field::HashType | Field::Rules | Field::Cpu => {}
+                    },
                     _ => {}
                 }
             }
