@@ -46,19 +46,27 @@ fn list_path_matches(input: &str) -> Vec<String> {
         .filter_map(|e| {
             let name = e.file_name().into_string().ok()?;
             if name.starts_with(prefix) {
-                let suffix = if e.file_type().ok()?.is_dir() { "/" } else { "" };
+                let suffix = if e.file_type().ok()?.is_dir() {
+                    "/"
+                } else {
+                    ""
+                };
                 Some(format!("{}{}{}", dir_to_keep, name, suffix))
             } else {
                 None
             }
         })
-        .take(8)
+        .take(3)
         .collect()
 }
 
 fn autocomplete_path(input: &str) -> Option<String> {
     let mut matches = list_path_matches(input);
-    if matches.len() == 1 { matches.pop() } else { None }
+    if matches.len() == 1 {
+        matches.pop()
+    } else {
+        None
+    }
 }
 
 pub fn run() -> io::Result<()> {
@@ -80,9 +88,9 @@ pub fn run() -> io::Result<()> {
 
             // if we are writing in file = orange, if not normal
             let file_line = if !app.on_wordlist {
-                Line::from(Span::styled(format!("> file:    {}", app.file), orange))
+                Line::from(Span::styled(format!("> file: {}", app.file), orange))
             } else {
-                Line::from(format!("  file:     {}", app.file))
+                Line::from(format!("  file: {}", app.file))
             };
 
             let word_line = if app.on_wordlist {
@@ -94,7 +102,11 @@ pub fn run() -> io::Result<()> {
                 Line::from(format!("  wordlist: {}", app.wordlist))
             };
 
-            let active = if app.on_wordlist { &app.wordlist } else { &app.file };
+            let active = if app.on_wordlist {
+                &app.wordlist
+            } else {
+                &app.file
+            };
             let suggestions = if active.is_empty() {
                 Vec::new()
             } else {
