@@ -20,14 +20,14 @@ struct Args {
     #[arg(
         short = 'f',
         help = "Path to file containing hashes",
-        required_unless_present = "benchmark"
+        required_unless_present_any = ["benchmark", "detect_hash"]
     )]
     file: Option<String>,
 
     #[arg(
         short = 'w',
         help = "Path to wordlist file",
-        required_unless_present = "benchmark"
+        required_unless_present_any = ["benchmark", "detect_hash"]
     )]
     wordlist: Option<String>,
 
