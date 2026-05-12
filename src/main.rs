@@ -49,6 +49,9 @@ struct Args {
 
     #[arg(long = "detect-hash", help = "Detect hash type in your hash file")]
     detect_hash: Option<String>,
+
+    #[arg(short = 'j', help = "Number of threads used in cracking")]
+    jobs: Option<usize>,
 }
 
 fn banner() {
@@ -106,6 +109,13 @@ fn main() -> anyhow::Result<()> {
     let star = "[*]";
 
     let args = Args::parse();
+
+    if let Some(n) = args.jobs {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(n)
+            .build_global()
+            .ok();
+    }
 
     if args.benchmark {
         let use_gpu = cfg!(feature = "gpu");
