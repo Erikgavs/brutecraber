@@ -20,14 +20,14 @@ struct Args {
     #[arg(
         short = 'f',
         help = "Path to file containing hashes",
-        required_unless_present = "benchmark"
+        required_unless_present_any = ["benchmark", "detect_hash"]
     )]
     file: Option<String>,
 
     #[arg(
         short = 'w',
         help = "Path to wordlist file",
-        required_unless_present = "benchmark"
+        required_unless_present_any = ["benchmark", "detect_hash"]
     )]
     wordlist: Option<String>,
 
@@ -46,6 +46,9 @@ struct Args {
 
     #[arg(long = "cpu", default_value_t = false, help = "Force CPU backend")]
     cpu: bool,
+
+    #[arg(long = "detect-hash", help = "Detect hash type in your hash file")]
+    detect_hash: Option<String>,
 }
 
 fn banner() {
@@ -107,6 +110,20 @@ fn main() -> anyhow::Result<()> {
     if args.benchmark {
         let use_gpu = cfg!(feature = "gpu");
         benchmark::run(use_gpu);
+        return Ok(());
+    }
+
+    if let Some(path) = &args.detect_hash {
+        let content = fs::read_to_string(path)?;
+        let mut lines = content.lines().filter(|l| !l.is_empty());
+        // first line
+        let first_type = detector::detect(lines.next().unwrap_or(""));
+        let all_same = lines.all(|l| detector::detect(l) == first_type);
+        // Change the "mixed", return the different hash types
+        println!(
+            "hash detected: {}",
+            if all_same { first_type } else { "mixed" }
+        );
         return Ok(());
     }
 
