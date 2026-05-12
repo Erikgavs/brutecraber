@@ -113,6 +113,19 @@ fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
+    if let Some(path) = &args.detect_hash {
+        let content = fs::read_to_string(path)?;
+        let mut lines = content.lines().filter(|l| !l.is_empty());
+        // first line
+        let first_type = detector::detect(lines.next().unwrap_or(""));
+        let all_same = lines.all(|l| detector::detect(l) == first_type);
+        println!(
+            "hash detected: {}",
+            if all_same { first_type } else { "mixed" }
+        );
+        return Ok(());
+    }
+
     let file = args
         .file
         .as_deref()
