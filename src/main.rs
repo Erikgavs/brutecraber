@@ -49,6 +49,9 @@ struct Args {
 
     #[arg(long = "detect-hash", help = "Detect hash type in your hash file")]
     detect_hash: Option<String>,
+
+    #[arg(short = 'j', help = "Number of threads used in cracking")]
+    jobs: Option<usize>,
 }
 
 fn banner() {
