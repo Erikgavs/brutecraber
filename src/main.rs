@@ -47,7 +47,7 @@ struct Args {
     #[arg(long = "cpu", default_value_t = false, help = "Force CPU backend")]
     cpu: bool,
 
-    #[arg(long = "detect-hash", help = "Detect hashtype in your hash file")]
+    #[arg(long = "detect-hash", help = "Detect hash type in your hash file")]
     detect_hash: Option<String>,
 }
 
@@ -119,6 +119,7 @@ fn main() -> anyhow::Result<()> {
         // first line
         let first_type = detector::detect(lines.next().unwrap_or(""));
         let all_same = lines.all(|l| detector::detect(l) == first_type);
+        // Change the "mixed", return the different hash types
         println!(
             "hash detected: {}",
             if all_same { first_type } else { "mixed" }
