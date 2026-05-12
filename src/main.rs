@@ -46,6 +46,9 @@ struct Args {
 
     #[arg(long = "cpu", default_value_t = false, help = "Force CPU backend")]
     cpu: bool,
+
+    #[arg(long = "detect-hash", help = "Detect hashtype in your hash file")]
+    detect_hash: Option<String>,
 }
 
 fn banner() {
