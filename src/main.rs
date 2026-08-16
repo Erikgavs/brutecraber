@@ -15,7 +15,7 @@ use colored::Colorize;
 use std::fs;
 
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
-#[command(name = "brutecraber", version = "0.9.0")]
+#[command(name = "brutecraber", version = env!("CARGO_PKG_VERSION"))]
 struct Args {
     #[arg(
         short = 'f',
@@ -85,7 +85,10 @@ fn banner() {
             .truecolor(222, 74, 31)
     );
     println!("                                                Author: erikgavs");
-    println!("                                                v0.9.0");
+    println!(
+        "                                                v{}",
+        env!("CARGO_PKG_VERSION")
+    );
     println!();
     println!(
         " [!] DISCLAIMER: This software is provided for ethical hacking and penetration testing"
