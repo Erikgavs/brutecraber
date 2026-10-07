@@ -1,4 +1,12 @@
 pub fn detect(hash: &str) -> &str {
+    if hash.starts_with("WPA*01*") {
+        return "wpa-pmkid";
+    }
+
+    if hash.starts_with("WPA*02*") {
+        return "wpa-handshake";
+    }
+
     if hash.starts_with("$scrypt") {
         return "scrypt";
     }
