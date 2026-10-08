@@ -61,6 +61,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         "bcrypt",
         "pbkdf2",
         "ntlm",
+        "pmkid",
     ];
 
     if !valid_types.contains(&hash_type) {
