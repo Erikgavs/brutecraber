@@ -170,7 +170,7 @@ dependencies = [
 
 [[package]]
 name = "brutecraber"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "argon2",

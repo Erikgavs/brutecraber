@@ -61,6 +61,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         "bcrypt",
         "pbkdf2",
         "ntlm",
+        "wpa-pmkid",
     ];
 
     if !valid_types.contains(&hash_type) {
@@ -594,6 +595,19 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
             for h in hashes {
                 if hashes::pbkdf2::verify(w, h) {
                     bar.println(format!("{} hash cracked {} -> {}", star.green(), h, w));
+                    found.fetch_add(1, Ordering::Relaxed);
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
+    if hash_type == "wpa-pmkid" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            for h in hashes {
+                if crate::hashes::wpa::verify_pmkid_line(w, h) {
+                    bar.println(format!("{} PMKID cracked {} -> {}", star.green(), h, w));
                     found.fetch_add(1, Ordering::Relaxed);
                 }
             }
