@@ -32,7 +32,7 @@ Crack hashes using wordlist-based dictionary attacks. Runs on GPU via OpenCL whe
 - **Automatic fallback** — If GPU isn't available, it transparently falls back to a multithreaded CPU backend.
 - **Simple** — One command. No config files. No setup.
 - **Smart** — Auto-detects hash types. Just point it at a file and go.
-- **Wide algorithm support** — MD5, SHA1, SHA256, SHA512, SHA3-256, SHA3-512, Bcrypt, NTLM, Argon2, Scrypt, PBKDF2.
+- **Wide algorithm support** — MD5, SHA1, SHA256, SHA512, SHA3-256, SHA3-512, Bcrypt, NTLM, Argon2, Scrypt, PBKDF2, WPA-PMKID.
 
 ---
 
@@ -41,7 +41,7 @@ Crack hashes using wordlist-based dictionary attacks. Runs on GPU via OpenCL whe
 BruteCraber v0.9.0 ships with two backends:
 
 - **GPU (OpenCL)** — kernels for MD5, SHA1, SHA256, SHA512, SHA3-256, SHA3-512 and NTLM. Used automatically when a GPU is detected.
-- **CPU (Rayon)** — SIMD-accelerated, chunked parallel processing. Used when GPU isn't available or for algorithms that can't be parallelized on GPU (Bcrypt, Argon2, Scrypt, PBKDF2).
+- **CPU (Rayon)** — SIMD-accelerated, chunked parallel processing. Used when GPU isn't available or for algorithms that can't be parallelized on GPU (Bcrypt, Argon2, Scrypt, PBKDF2, WPA-PMKID).
 
 Run `--benchmark` to measure performance on your hardware.
 
@@ -57,6 +57,7 @@ Run `--benchmark` to measure performance on your hardware.
 | **Multithreading** | Parallel CPU cracking with `rayon` |
 | **Auto-detection** | No need to specify hash type |
 | **Modern KDFs** | Argon2, Scrypt, PBKDF2 |
+| **WPA-PMKID** | CPU cracking for PMKID records (`WPA*01*...`) |
 | **Hex / Base64 / Salted** | All three formats for the main hex algorithms |
 | **Rules engine** | Leet speak, capitalize, append numbers (GPU + CPU) |
 | **Colored output** | Clear, readable terminal output |
@@ -128,6 +129,9 @@ If OpenCL or a GPU isn't available, BruteCraber automatically falls back to the 
 # Crack Argon2 hashes
 ./brutecraber -f argon2.txt -w rockyou.txt -t argon2
 
+# Crack WPA PMKID records
+./brutecraber -f pmkid_hashes.txt -w rockyou.txt -t wpa-pmkid --cpu
+
 # Enable rules engine
 ./brutecraber -f hashes.txt -w rockyou.txt --rules
 ```
@@ -178,6 +182,14 @@ When falling back to CPU:
 | SHA3-512 | `sha3-512` | `sha3-512-base64` | `sha3-512-salt` |
 | NTLM | `ntlm` | — | — |
 
+### Wi-Fi hashes
+
+| Algorithm | Type | Input format |
+|-----------|------|--------------|
+| WPA PMKID | `wpa-pmkid` | WPA PMKID record (`WPA*01*...`) |
+
+The PMKID line contains the PMKID, AP and station MAC addresses, and the hex-encoded ESSID. The type is auto-detected from the `WPA*01*` prefix; WPA-PMKID currently runs on the CPU.
+
 ### Password-hashing algorithms (CPU only)
 
 | Algorithm | Type | Notes |
@@ -185,10 +197,10 @@ When falling back to CPU:
 | Bcrypt | `bcrypt` | Salt embedded in hash (`$2a$`, `$2b$`, `$2y$`) |
 | Argon2 | `argon2` | Modern memory-hard KDF |
 | Scrypt | `scrypt` | Used in crypto wallets |
-| PBKDF2 | `pbkdf2` | Enterprise standard, WiFi WPA |
+| PBKDF2 | `pbkdf2` | PHC-formatted PBKDF2 hashes |
 
 > Salted hashes use the format `salt:hash` (one per line).
-> Bcrypt/Argon2/Scrypt/PBKDF2 include their own salt inside the hash string.
+> Bcrypt/Argon2/Scrypt/PBKDF2 include their own salt inside the hash string. WPA-PMKID records carry the ESSID and MAC addresses in the input line.
 
 ---
 
@@ -218,7 +230,8 @@ brutecraber/
 │       ├── bcrypt.rs
 │       ├── argon2.rs
 │       ├── scrypt.rs
-│       └── pbkdf2.rs
+│       ├── pbkdf2.rs
+│       └── wpa.rs          # WPA PMKID parsing and verification
 ├── tests/               # Test hashes and wordlists
 ├── Cargo.toml
 ├── CHANGELOG.md
@@ -239,6 +252,7 @@ brutecraber/
 - [x] Argon2 support
 - [x] Scrypt support
 - [x] PBKDF2 support
+- [x] WPA PMKID support
 - [x] GPU acceleration (OpenCL) with automatic CPU fallback
 - [ ] Output results to file (`-o`)
 - [ ] Potfile (remember cracked hashes between runs)

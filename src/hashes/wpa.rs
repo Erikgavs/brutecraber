@@ -3,7 +3,7 @@ use pbkdf2::hmac::{Hmac, Mac};
 use pbkdf2::pbkdf2_hmac;
 use sha1::Sha1;
 
-// Parse a PMKID hash line in Hashcat 22000 text format:
+// Parse a WPA PMKID line in this format:
 // WPA*01*PMKID*MAC_AP*MAC_STA*ESSID***
 // Return the PMKID and MACs as byte arrays, and the ESSID as bytes.
 fn parse_pmkid_line(hash_line: &str) -> Option<([u8; 16], [u8; 6], [u8; 6], Vec<u8>)> {
