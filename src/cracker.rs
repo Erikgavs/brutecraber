@@ -603,6 +603,19 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         return found.load(Ordering::Relaxed);
     }
 
+    if hash_type == "wpa-pmkid" {
+        parallel_crack(wordlist, rule, &bar, |w| {
+            for h in hashes {
+                if crate::hashes::wpa::verify_pmkid_line(w, h) {
+                    bar.println(format!("{} PMKID cracked {} -> {}", star.green(), h, w));
+                    found.fetch_add(1, Ordering::Relaxed);
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
     if hash_type == "argon2" {
         parallel_crack(wordlist, rule, &bar, |w| {
             for h in hashes {
