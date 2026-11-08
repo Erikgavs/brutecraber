@@ -37,6 +37,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
 
     let valid_types = [
         "md5",
+        "md5/ntlm",
         "md5-base64",
         "md5-salt",
         "sha1",
@@ -68,6 +69,31 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         bar.println(format!("\n{} unsupported type of hash", "[!]".red()));
         bar.finish();
         return 0;
+    }
+
+    if hash_type == "md5/ntlm" {
+        let target_hashes: HashSet<[u8; 16]> = hashes
+            .iter()
+            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .collect();
+
+        parallel_crack(wordlist, rule, &bar, |word| {
+            let md5_hash = hashes::md5::crack(word);
+            let matched_hash = if target_hashes.contains(&md5_hash) {
+                Some(md5_hash)
+            } else {
+                let ntlm_hash = hashes::ntlm::crack(word);
+                target_hashes.contains(&ntlm_hash).then_some(ntlm_hash)
+            };
+
+            if let Some(hash_bytes) = matched_hash {
+                let hex: String = hash_bytes.iter().map(|b| format!("{:02x}", b)).collect();
+                bar.println(format!("{} hash cracked {} -> {}", star.green(), hex, word));
+                found.fetch_add(1, Ordering::Relaxed);
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
     }
 
     if hash_type == "md5" {

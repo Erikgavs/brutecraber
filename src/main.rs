@@ -54,6 +54,56 @@ struct Args {
     jobs: Option<usize>,
 }
 
+fn normalize_hashes(content: &str) -> Vec<String> {
+    content
+        .lines()
+        .filter_map(|line| {
+            let line = line.trim().trim_start_matches('\u{feff}').trim();
+            (!line.is_empty()).then(|| line.to_owned())
+        })
+        .collect()
+}
+
+fn detect_hashes(hashes: &[String]) -> String {
+    let Some(first_hash) = hashes.first() else {
+        return detector::UNKNOWN_HASH_TYPE.to_owned();
+    };
+
+    let first_type = detector::detect(first_hash);
+    if hashes
+        .iter()
+        .skip(1)
+        .any(|hash| detector::detect(hash) != first_type)
+    {
+        "mixed".to_owned()
+    } else if first_type == detector::MD5_NTLM {
+        "md5/ntlm (ambiguous)".to_owned()
+    } else {
+        first_type.to_owned()
+    }
+}
+
+fn auto_detect_hash_type(hashes: &[String]) -> anyhow::Result<&'static str> {
+    let first_hash = hashes
+        .first()
+        .ok_or_else(|| anyhow::anyhow!("hash file contains no non-empty hashes"))?;
+    let first_type = detector::detect(first_hash);
+
+    if first_type == detector::UNKNOWN_HASH_TYPE {
+        anyhow::bail!("unable to detect hash type; specify it with -t");
+    }
+
+    if hashes
+        .iter()
+        .skip(1)
+        .any(|hash| detector::detect(hash) != first_type)
+    {
+        anyhow::bail!("mixed hash types detected; split them into separate files");
+    }
+
+    Ok(first_type)
+}
+
 fn banner() {
     println!(
         "{}",
@@ -128,15 +178,8 @@ fn main() -> anyhow::Result<()> {
 
     if let Some(path) = &args.detect_hash {
         let content = fs::read_to_string(path)?;
-        let mut lines = content.lines().filter(|l| !l.is_empty());
-        // first line
-        let first_type = detector::detect(lines.next().unwrap_or(""));
-        let all_same = lines.all(|l| detector::detect(l) == first_type);
-        // Change the "mixed", return the different hash types
-        println!(
-            "hash detected: {}",
-            if all_same { first_type } else { "mixed" }
-        );
+        let hashes = normalize_hashes(&content);
+        println!("hash detected: {}", detect_hashes(&hashes));
         return Ok(());
     }
 
@@ -151,7 +194,8 @@ fn main() -> anyhow::Result<()> {
         .ok_or_else(|| anyhow::anyhow!("[-] Missing -w (wordlist)"))?;
 
     let content = fs::read_to_string(file)?;
-    let hashes: Vec<&str> = content.lines().collect();
+    let hash_lines = normalize_hashes(&content);
+    let hashes: Vec<&str> = hash_lines.iter().map(String::as_str).collect();
 
     let bytes = fs::read(wordlist_path)?;
     let wordlist = String::from_utf8_lossy(&bytes).to_string();
@@ -162,17 +206,21 @@ fn main() -> anyhow::Result<()> {
     println!();
 
     let auto_detect = if args.hash == "auto" {
-        let detect_hash = hashes.first().unwrap_or(&"");
-        detector::detect(detect_hash).to_string()
+        auto_detect_hash_type(&hash_lines)?.to_owned()
     } else {
         args.hash.clone()
     };
 
     if args.hash == "auto" {
+        let detected_label = if auto_detect == detector::MD5_NTLM {
+            "md5/ntlm (ambiguous; trying both)"
+        } else {
+            auto_detect.as_str()
+        };
         println!(
             "{} Auto detected hash: {}\n",
             star.green(),
-            auto_detect.yellow()
+            detected_label.yellow()
         );
     } else {
         println!("{} Selected hash: {}\n", star, auto_detect.green());

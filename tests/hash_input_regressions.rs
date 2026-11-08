@@ -144,7 +144,7 @@ fn auto_skips_leading_blank_lines_consistently() {
         .detect_command()
         .assert()
         .success()
-        .stdout(contains("hash detected: md5"));
+        .stdout(contains("hash detected: md5/ntlm (ambiguous)"));
 
     inputs
         .crack_command(None)
@@ -164,7 +164,7 @@ fn auto_strips_utf8_bom_from_hash_file() {
         .detect_command()
         .assert()
         .success()
-        .stdout(contains("hash detected: md5"));
+        .stdout(contains("hash detected: md5/ntlm (ambiguous)"));
 
     inputs
         .crack_command(None)
