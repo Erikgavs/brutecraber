@@ -81,6 +81,67 @@ fn auto_cracks_md5_32_hex_hash() {
 }
 
 #[test]
+fn explicit_type_cracks_all_raw_hex_algorithms() {
+    let cases = [
+        ("md5", MD5_PASSWORD),
+        ("sha1", "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8"),
+        (
+            "sha256",
+            "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        ),
+        (
+            "sha512",
+            "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86",
+        ),
+        (
+            "sha3-256",
+            "c0067d4af4e87f00dbac63b6156828237059172d1bbeac67427345d6a9fda484",
+        ),
+        (
+            "sha3-512",
+            "e9a75486736a550af4fea861e2378305c4a555a05094dee1dca2f68afea49cc3a50e8de6ea131ea521311f4d6fb054a146e8282f8e35ff2e6368c1a62e909716",
+        ),
+    ];
+
+    for (hash_type, digest) in cases {
+        let inputs = TestInputs::new(
+            format!("{digest}\n").as_bytes(),
+            format!("{PASSWORD}\n").as_bytes(),
+        );
+
+        inputs
+            .crack_command(Some(hash_type))
+            .assert()
+            .success()
+            .stdout(contains("cracked 1/1 hashes"));
+    }
+}
+
+#[test]
+fn auto_detects_and_cracks_sha1_and_ambiguous_sha2_sha3_hashes() {
+    let cases = [
+        "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8",
+        "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8",
+        "c0067d4af4e87f00dbac63b6156828237059172d1bbeac67427345d6a9fda484",
+        "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86",
+        "e9a75486736a550af4fea861e2378305c4a555a05094dee1dca2f68afea49cc3a50e8de6ea131ea521311f4d6fb054a146e8282f8e35ff2e6368c1a62e909716",
+    ];
+
+    for digest in cases {
+        let inputs = TestInputs::new(
+            format!("{digest}\n").as_bytes(),
+            format!("{PASSWORD}\n").as_bytes(),
+        );
+
+        inputs
+            .crack_command(None)
+            .assert()
+            .success()
+            .stdout(contains("cracked 1/1 hashes"));
+    }
+}
+
+#[test]
 fn explicit_ntlm_cracks_the_32_hex_known_vector() {
     let inputs = TestInputs::new(
         format!("{NTLM_PASSWORD}\n").as_bytes(),
@@ -95,12 +156,65 @@ fn explicit_ntlm_cracks_the_32_hex_known_vector() {
 }
 
 #[test]
+fn bcrypt_cli_cracks_known_embedded_salt_hash() {
+    let hash = "$2y$04$xa4SIvcnMqIWtM8LZt3/2eoi5AsfZdM.wstwCsGVXDHSVY6Egv9rm\n";
+    let inputs = TestInputs::new(hash.as_bytes(), format!("{PASSWORD}\n").as_bytes());
+
+    inputs
+        .crack_command(None)
+        .assert()
+        .success()
+        .stdout(contains("cracked 1/1 hashes"));
+
+    inputs
+        .crack_command(Some("bcrypt"))
+        .assert()
+        .success()
+        .stdout(contains("cracked 1/1 hashes"));
+}
+
+#[test]
+fn argon2_cli_cracks_phc_fixture_in_auto_and_explicit_modes() {
+    let hashes = fs::read_to_string("tests/hashes/argon2/hashes.txt").unwrap();
+    let wordlist = fs::read_to_string("tests/hashes/argon2/wordlist.txt").unwrap();
+    let inputs = TestInputs::new(hashes.as_bytes(), wordlist.as_bytes());
+
+    inputs
+        .crack_command(None)
+        .assert()
+        .success()
+        .stdout(contains("cracked 3/3 hashes"));
+
+    inputs
+        .crack_command(Some("argon2"))
+        .assert()
+        .success()
+        .stdout(contains("cracked 3/3 hashes"));
+}
+
+#[test]
 fn explicit_raw_type_accepts_username_hash_records() {
     let hashes = format!("alice:{MD5_PASSWORD}\n");
     let inputs = TestInputs::new(hashes.as_bytes(), format!("{PASSWORD}\n").as_bytes());
 
     inputs
         .crack_command(Some("md5"))
+        .assert()
+        .success()
+        .stdout(contains("cracked 1/1 hashes"));
+}
+
+#[test]
+fn cli_rules_can_crack_a_transformed_candidate() {
+    let password_hash = "dc647eb65e6711e155375218212b3964";
+    let inputs = TestInputs::new(
+        format!("{password_hash}\n").as_bytes(),
+        format!("{PASSWORD}\n").as_bytes(),
+    );
+    let mut command = inputs.crack_command(Some("md5"));
+    command.arg("--rules");
+
+    command
         .assert()
         .success()
         .stdout(contains("cracked 1/1 hashes"));
@@ -273,6 +387,18 @@ fn base64_without_padding_cracks_with_explicit_type() {
 }
 
 #[test]
+fn base64_with_padding_still_cracks_with_explicit_type() {
+    let hash = "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=\n";
+    let inputs = TestInputs::new(hash.as_bytes(), format!("{PASSWORD}\n").as_bytes());
+
+    inputs
+        .crack_command(Some("sha256-base64"))
+        .assert()
+        .success()
+        .stdout(contains("cracked 1/1 hashes"));
+}
+
+#[test]
 fn hash_salt_layout_uses_explicit_suffix_salt_types() {
     let cases = [
         ("md5-salt-suffix", "9af87eabc21c318d6839aea39d5156bb"),
@@ -322,6 +448,41 @@ fn existing_salt_hash_layout_remains_supported() {
         .assert()
         .success()
         .stdout(contains("cracked 1/1 hashes"));
+}
+
+#[test]
+fn explicit_type_cracks_all_salt_prefix_algorithms() {
+    let cases = [
+        ("md5-salt", "86f75bc83edcd705c834c436f6b64fdc"),
+        ("sha1-salt", "4b7f88df9bc5e48e1e5bd3ad9bb1cc54e54ba68d"),
+        (
+            "sha256-salt",
+            "ab8182cc945620b02e1bca27accc51809b2a5fca67f576823c0044b09ee693c8",
+        ),
+        (
+            "sha512-salt",
+            "16840f66c91412ad31d522935d66b54d423c4f240aca10480cef20436a11d119e29ad82b761e8eafb8abf2bfabbe0aebb4732c76267225f6ad178d8896a9018f",
+        ),
+        (
+            "sha3-256-salt",
+            "a4b91e1006e60758ffe90df79580b5b15fd37ab6e6a49a8c03939beff5a61e3a",
+        ),
+        (
+            "sha3-512-salt",
+            "0154e9b9d5509ef2bf78fb2ac017a51d5c8ef9f7e4596eef7174bda271b93289a959878edc4a144a0943d9a18db6c77391089290747235f62a111958ed47b91a",
+        ),
+    ];
+
+    for (hash_type, digest) in cases {
+        let hashes = format!("x7k2:{digest}\n");
+        let inputs = TestInputs::new(hashes.as_bytes(), format!("{PASSWORD}\n").as_bytes());
+
+        inputs
+            .crack_command(Some(hash_type))
+            .assert()
+            .success()
+            .stdout(contains("cracked 1/1 hashes"));
+    }
 }
 
 #[test]
