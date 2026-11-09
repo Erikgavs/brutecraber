@@ -201,11 +201,14 @@ The PMKID line contains the PMKID, AP and station MAC addresses, and the hex-enc
 
 ### Hash input formats
 
+- Blank lines and full-line comments starting with `#` are ignored.
+- Wordlists must be valid UTF-8; invalid byte sequences are rejected instead of silently replaced.
 - Plain hashes use one digest per line. Records such as `username:hash` are accepted when `-t` is explicitly set; the last field is treated as the digest.
 - Auto-detection rejects colon-delimited records because `username:hash`, `salt:hash`, and `hash:salt` are ambiguous. Select a type with `-t`.
 - `*-salt` uses `salt:hash` and computes `hash(salt + candidate)`.
 - `*-salt-suffix` uses `hash:salt` and computes `hash(candidate + salt)`.
 - Base64 modes accept standard Base64 with or without trailing `=` padding. Specify the matching `*-base64` type with `-t`.
+- Invalid and duplicate hash records are reported and excluded from the final total. Cracked totals count unique target hashes, not repeated candidate matches.
 - Bcrypt/Argon2/Scrypt/PBKDF2 include their own salt inside the hash string. WPA-PMKID records carry the ESSID and MAC addresses in the input line.
 
 ---

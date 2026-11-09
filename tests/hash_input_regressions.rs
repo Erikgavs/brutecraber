@@ -184,6 +184,18 @@ fn auto_skips_leading_blank_lines_consistently() {
 }
 
 #[test]
+fn auto_ignores_comment_lines() {
+    let hashes = format!("# hashes generated for this challenge\n{MD5_PASSWORD}\n");
+    let inputs = TestInputs::new(hashes.as_bytes(), format!("{PASSWORD}\n").as_bytes());
+
+    inputs
+        .crack_command(None)
+        .assert()
+        .success()
+        .stdout(contains("cracked 1/1 hashes"));
+}
+
+#[test]
 fn auto_strips_utf8_bom_from_hash_file() {
     let mut hashes = vec![0xEF, 0xBB, 0xBF];
     hashes.extend_from_slice(MD5_PASSWORD.as_bytes());
@@ -310,4 +322,63 @@ fn existing_salt_hash_layout_remains_supported() {
         .assert()
         .success()
         .stdout(contains("cracked 1/1 hashes"));
+}
+
+#[test]
+fn duplicate_hashes_and_wordlist_entries_count_once() {
+    let hashes = format!("{MD5_PASSWORD}\n{MD5_PASSWORD}\n");
+    let words = format!("{PASSWORD}\n{PASSWORD}\n");
+    let inputs = TestInputs::new(hashes.as_bytes(), words.as_bytes());
+
+    let output = inputs
+        .crack_command(Some("md5"))
+        .output()
+        .expect("run brutecraber");
+    let output_text = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+
+    assert!(output.status.success());
+    assert!(output_text.contains("cracked 1/1 hashes"));
+    assert!(output_text.contains("ignored 1 duplicate hash record"));
+}
+
+#[test]
+fn invalid_utf8_wordlist_is_rejected_without_lossy_conversion() {
+    let inputs = TestInputs::new(format!("{MD5_PASSWORD}\n").as_bytes(), b"pass\xffword\n");
+
+    inputs
+        .crack_command(Some("md5"))
+        .assert()
+        .failure()
+        .stderr(contains("wordlist must be valid UTF-8"));
+}
+
+#[test]
+fn invalid_hash_records_are_reported_without_blocking_valid_records() {
+    let hashes = format!("{MD5_PASSWORD}\nnot-a-hash\n");
+    let inputs = TestInputs::new(hashes.as_bytes(), format!("{PASSWORD}\n").as_bytes());
+
+    inputs
+        .crack_command(None)
+        .assert()
+        .success()
+        .stdout(contains("1 invalid hash record"))
+        .stdout(contains("cracked 1/1 hashes"));
+}
+
+#[test]
+fn unsupported_explicit_hash_type_returns_nonzero_status() {
+    let inputs = TestInputs::new(
+        format!("{MD5_PASSWORD}\n").as_bytes(),
+        format!("{PASSWORD}\n").as_bytes(),
+    );
+
+    inputs
+        .crack_command(Some("not-a-supported-type"))
+        .assert()
+        .failure()
+        .stderr(contains("unsupported hash type"));
 }

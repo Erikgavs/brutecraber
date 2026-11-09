@@ -12,6 +12,7 @@ use crate::backend::CrackingBackend;
 use crate::cpu_backend::CpuBackend;
 use clap::Parser;
 use colored::Colorize;
+use std::collections::HashSet;
 use std::fs;
 
 #[derive(Parser)] // sabe leer argumentos (derive(parser))
@@ -59,9 +60,31 @@ fn normalize_hashes(content: &str) -> Vec<String> {
         .lines()
         .filter_map(|line| {
             let line = line.trim().trim_start_matches('\u{feff}').trim();
-            (!line.is_empty()).then(|| line.to_owned())
+            (!line.is_empty() && !line.starts_with('#')).then(|| line.to_owned())
         })
         .collect()
+}
+
+fn prepare_hashes(hashes: Vec<String>, hash_type: &str) -> (Vec<String>, usize, usize) {
+    let mut seen = HashSet::new();
+    let mut unique_hashes = Vec::with_capacity(hashes.len());
+    let mut invalid_count = 0;
+    let mut duplicate_count = 0;
+
+    for hash in hashes {
+        let Some(target_key) = cracker::target_key(hash_type, &hash) else {
+            invalid_count += 1;
+            continue;
+        };
+
+        if seen.insert(target_key) {
+            unique_hashes.push(hash);
+        } else {
+            duplicate_count += 1;
+        }
+    }
+
+    (unique_hashes, invalid_count, duplicate_count)
 }
 
 fn detect_hashes(hashes: &[String]) -> String {
@@ -92,24 +115,23 @@ fn auto_detect_hash_type(hashes: &[String]) -> anyhow::Result<&'static str> {
         anyhow::bail!("colon-delimited records require an explicit hash type with -t");
     }
 
-    let first_hash = hashes
-        .first()
-        .ok_or_else(|| anyhow::anyhow!("hash file contains no non-empty hashes"))?;
-    let first_type = detector::detect(first_hash);
+    let mut detected_type = None;
+    for hash in hashes {
+        let candidate_type = detector::detect(hash);
+        if candidate_type == detector::UNKNOWN_HASH_TYPE {
+            continue;
+        }
 
-    if first_type == detector::UNKNOWN_HASH_TYPE {
-        anyhow::bail!("unable to detect hash type; specify it with -t");
+        if let Some(first_type) = detected_type {
+            if candidate_type != first_type {
+                anyhow::bail!("mixed hash types detected; split them into separate files");
+            }
+        } else {
+            detected_type = Some(candidate_type);
+        }
     }
 
-    if hashes
-        .iter()
-        .skip(1)
-        .any(|hash| detector::detect(hash) != first_type)
-    {
-        anyhow::bail!("mixed hash types detected; split them into separate files");
-    }
-
-    Ok(first_type)
+    detected_type.ok_or_else(|| anyhow::anyhow!("unable to detect hash type; specify it with -t"))
 }
 
 fn banner() {
@@ -203,10 +225,6 @@ fn main() -> anyhow::Result<()> {
 
     let content = fs::read_to_string(file)?;
     let hash_lines = normalize_hashes(&content);
-    let hashes: Vec<&str> = hash_lines.iter().map(String::as_str).collect();
-
-    let bytes = fs::read(wordlist_path)?;
-    let wordlist = String::from_utf8_lossy(&bytes).to_string();
 
     println!();
     println!("Selected file: {}", file.green());
@@ -218,6 +236,20 @@ fn main() -> anyhow::Result<()> {
     } else {
         args.hash.clone()
     };
+
+    if !cracker::is_supported_hash_type(&auto_detect) {
+        anyhow::bail!("unsupported hash type '{auto_detect}'");
+    }
+
+    let (hash_lines, invalid_hashes, duplicate_hashes) = prepare_hashes(hash_lines, &auto_detect);
+    if hash_lines.is_empty() {
+        anyhow::bail!("hash file contains no valid hashes for type '{auto_detect}'");
+    }
+
+    let bytes = fs::read(wordlist_path)?;
+    let wordlist = String::from_utf8(bytes)
+        .map_err(|error| anyhow::anyhow!("wordlist must be valid UTF-8: {error}"))?;
+    let hashes: Vec<&str> = hash_lines.iter().map(String::as_str).collect();
 
     if args.hash == "auto" {
         let detected_label = if auto_detect == detector::MD5_NTLM {
@@ -232,6 +264,21 @@ fn main() -> anyhow::Result<()> {
         );
     } else {
         println!("{} Selected hash: {}\n", star, auto_detect.green());
+    }
+
+    if invalid_hashes > 0 {
+        println!(
+            "{} ignored {} invalid hash record(s)",
+            "[!]".yellow(),
+            invalid_hashes
+        );
+    }
+    if duplicate_hashes > 0 {
+        println!(
+            "{} ignored {} duplicate hash record(s)",
+            "[*]".yellow(),
+            duplicate_hashes
+        );
     }
 
     let force_cpu = args.cpu;

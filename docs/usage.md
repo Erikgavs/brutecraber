@@ -80,7 +80,7 @@ This increases cracking chances without needing a bigger wordlist.
 
 ## Hash file format
 
-One hash per line:
+One hash per line. Blank lines and full-line comments beginning with `#` are ignored. Wordlists must be valid UTF-8; invalid byte sequences are rejected rather than silently replaced.
 
 ```
 5f4dcc3b5aa765d61d8327deb882cf99
@@ -100,4 +100,4 @@ For `*-salt-suffix`, use `hash:salt`; Brutecraber computes `hash(candidate + sal
 9af87eabc21c318d6839aea39d5156bb:x7k2
 ```
 
-Username-prefixed raw hashes (`username:hash`) are accepted when `-t` explicitly selects the hash type. Auto-detection rejects colon-delimited records because username/hash and salted formats are ambiguous. Base64 modes accept padded and unpadded standard Base64, but also require an explicit `-t` type.
+Username-prefixed raw hashes (`username:hash`) are accepted when `-t` explicitly selects the hash type. Auto-detection rejects colon-delimited records because username/hash and salted formats are ambiguous. Base64 modes accept padded and unpadded standard Base64, but also require an explicit `-t` type. Invalid and duplicate hash records are reported and excluded; the cracked total counts unique target hashes.

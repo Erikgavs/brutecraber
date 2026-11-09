@@ -67,6 +67,8 @@ If your hashes are Base64 encoded, use the `-base64` suffix. Standard Base64 wit
 
 ### Standard (one hash per line)
 
+Blank lines and full-line comments beginning with `#` are ignored.
+
 ```
 5f4dcc3b5aa765d61d8327deb882cf99
 e10adc3949ba59abbe56e057f20f883e

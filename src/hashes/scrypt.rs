@@ -3,6 +3,10 @@ use scrypt::{
     password_hash::{PasswordHash, PasswordVerifier},
 };
 
+pub fn is_valid_hash_format(hash: &str) -> bool {
+    hash.starts_with("$scrypt$") && PasswordHash::new(hash).is_ok()
+}
+
 pub fn verify(word: &str, hash: &str) -> bool {
     match PasswordHash::new(hash) {
         Ok(parsed_hash) => Scrypt
