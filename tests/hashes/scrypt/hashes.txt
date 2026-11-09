@@ -1,0 +1,4 @@
+# Low-cost integration-test vectors (ln=10); not suitable for production password storage.
+$scrypt$ln=10,r=8,p=1$YnJ1dGVjcmFiZXItc2NyeXB0LTE$yQIDfaLsgNxgR6x45cxxxotADEFuyDpksEYUsU3vDwE
+$scrypt$ln=10,r=8,p=1$YnJ1dGVjcmFiZXItc2NyeXB0LTI$2DCYwj0OvMfyd1OCLUxyCoGUC1HPfp1LE1RyfhEqMTM
+$scrypt$ln=10,r=8,p=1$YnJ1dGVjcmFiZXItc2NyeXB0LTM$rNUfQAAhp25KKrVXGTufoVemm4dbw6lmSCZtlcXKf6Y
