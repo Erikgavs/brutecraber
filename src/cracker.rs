@@ -19,6 +19,34 @@ fn hex_to_bytes(hex: &str) -> Option<Vec<u8>> {
     Some(bytes)
 }
 
+fn hash_value(record: &str) -> &str {
+    // An explicitly selected raw/KDF type may read `username:hash`; auto mode
+    // rejects colon-delimited records because they can also represent salted hashes.
+    record.rsplit_once(':').map_or(record, |(_, hash)| hash)
+}
+
+fn decode_base64_hash(hash: &str) -> Option<Vec<u8>> {
+    // Base64 permits omitted padding in some generators; accept both encodings.
+    general_purpose::STANDARD
+        .decode(hash)
+        .or_else(|_| general_purpose::STANDARD_NO_PAD.decode(hash))
+        .ok()
+}
+
+fn suffix_salted_hash(hash_type: &str, password: &str, salt: &str) -> Option<Vec<u8>> {
+    // `*-salt-suffix` explicitly means hash(password + salt); `*-salt` remains salt + password.
+    let candidate = format!("{password}{salt}");
+    match hash_type {
+        "md5-salt-suffix" => Some(hashes::md5::crack(&candidate).to_vec()),
+        "sha1-salt-suffix" => Some(hashes::sha1_hash::crack(&candidate).to_vec()),
+        "sha256-salt-suffix" => Some(hashes::sha256::crack(&candidate).to_vec()),
+        "sha512-salt-suffix" => Some(hashes::sha512::crack(&candidate).to_vec()),
+        "sha3-256-salt-suffix" => Some(hashes::sha3_256::crack(&candidate).to_vec()),
+        "sha3-512-salt-suffix" => Some(hashes::sha3_512::crack(&candidate).to_vec()),
+        _ => None,
+    }
+}
+
 pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usize {
     let star = "[*]";
 
@@ -40,22 +68,28 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         "md5/ntlm",
         "md5-base64",
         "md5-salt",
+        "md5-salt-suffix",
         "sha1",
         "sha1-base64",
         "sha1-salt",
+        "sha1-salt-suffix",
         "sha256",
         "sha256-base64",
         "sha256-salt",
+        "sha256-salt-suffix",
         "sha512",
         "sha512-base64",
         "sha512-salt",
+        "sha512-salt-suffix",
         "sha3-256",
         "sha3-256-base64",
         "sha3-256-salt",
+        "sha3-256-salt-suffix",
         "sha256/sha3-256",
         "sha3-512",
         "sha3-512-base64",
         "sha3-512-salt",
+        "sha3-512-salt-suffix",
         "sha512/sha3-512",
         "scrypt",
         "argon2",
@@ -74,7 +108,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "md5/ntlm" {
         let target_hashes: HashSet<[u8; 16]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |word| {
@@ -99,7 +133,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "md5" {
         let hash_set: HashSet<[u8; 16]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -117,7 +151,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha1" {
         let hash_set: HashSet<[u8; 20]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -135,7 +169,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha256" {
         let hash_set: HashSet<[u8; 32]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -153,7 +187,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha512" {
         let hash_set: HashSet<[u8; 64]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -171,7 +205,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha3-256" {
         let hash_set: HashSet<[u8; 32]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -189,7 +223,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha3-512" {
         let hash_set: HashSet<[u8; 64]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -207,7 +241,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "ntlm" {
         let hash_set: HashSet<[u8; 16]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -225,7 +259,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "md5-base64" {
         let hash_set: HashSet<[u8; 16]> = hashes
             .iter()
-            .filter_map(|h| general_purpose::STANDARD.decode(h).ok()?.try_into().ok())
+            .filter_map(|h| decode_base64_hash(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -248,7 +282,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha1-base64" {
         let hash_set: HashSet<[u8; 20]> = hashes
             .iter()
-            .filter_map(|h| general_purpose::STANDARD.decode(h).ok()?.try_into().ok())
+            .filter_map(|h| decode_base64_hash(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -271,7 +305,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha256-base64" {
         let hash_set: HashSet<[u8; 32]> = hashes
             .iter()
-            .filter_map(|h| general_purpose::STANDARD.decode(h).ok()?.try_into().ok())
+            .filter_map(|h| decode_base64_hash(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -294,7 +328,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha512-base64" {
         let hash_set: HashSet<[u8; 64]> = hashes
             .iter()
-            .filter_map(|h| general_purpose::STANDARD.decode(h).ok()?.try_into().ok())
+            .filter_map(|h| decode_base64_hash(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -317,7 +351,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha3-256-base64" {
         let hash_set: HashSet<[u8; 32]> = hashes
             .iter()
-            .filter_map(|h| general_purpose::STANDARD.decode(h).ok()?.try_into().ok())
+            .filter_map(|h| decode_base64_hash(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -340,7 +374,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha3-512-base64" {
         let hash_set: HashSet<[u8; 64]> = hashes
             .iter()
-            .filter_map(|h| general_purpose::STANDARD.decode(h).ok()?.try_into().ok())
+            .filter_map(|h| decode_base64_hash(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -363,7 +397,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "scrypt" {
         parallel_crack(wordlist, rule, &bar, |w| {
             for h in hashes {
-                if hashes::scrypt::verify(w, h) {
+                if hashes::scrypt::verify(w, hash_value(h)) {
                     bar.println(format!("{} hash cracked {} -> {}", star.green(), h, w));
                     found.fetch_add(1, Ordering::Relaxed);
                 }
@@ -553,10 +587,39 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
         return found.load(Ordering::Relaxed);
     }
 
+    if hash_type.ends_with("-salt-suffix") {
+        let salted_targets: Vec<(&str, &str, Vec<u8>)> = hashes
+            .iter()
+            .filter_map(|line| {
+                let (target, salt) = line.split_once(':')?;
+                Some((target, salt, hex_to_bytes(target)?))
+            })
+            .collect();
+
+        parallel_crack(wordlist, rule, &bar, |word| {
+            for (target_hex, salt, target_bytes) in &salted_targets {
+                if suffix_salted_hash(hash_type, word, salt).as_deref()
+                    == Some(target_bytes.as_slice())
+                {
+                    bar.println(format!(
+                        "{} hash cracked [suffix salt:{}] {} -> {}",
+                        star.green(),
+                        salt,
+                        target_hex,
+                        word
+                    ));
+                    found.fetch_add(1, Ordering::Relaxed);
+                }
+            }
+        });
+        bar.finish();
+        return found.load(Ordering::Relaxed);
+    }
+
     if hash_type == "sha256/sha3-256" {
         let hash_set: HashSet<[u8; 32]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -581,7 +644,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "sha512/sha3-512" {
         let hash_set: HashSet<[u8; 64]> = hashes
             .iter()
-            .filter_map(|h| hex_to_bytes(h)?.try_into().ok())
+            .filter_map(|h| hex_to_bytes(hash_value(h))?.try_into().ok())
             .collect();
 
         parallel_crack(wordlist, rule, &bar, |w| {
@@ -606,7 +669,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "bcrypt" {
         parallel_crack(wordlist, rule, &bar, |w| {
             for h in hashes {
-                if hashes::bcrypt::crack(w, h) {
+                if hashes::bcrypt::crack(w, hash_value(h)) {
                     bar.println(format!("{} hash cracked {} -> {}", star.green(), h, w));
                     found.fetch_add(1, Ordering::Relaxed);
                 }
@@ -619,7 +682,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "pbkdf2" {
         parallel_crack(wordlist, rule, &bar, |w| {
             for h in hashes {
-                if hashes::pbkdf2::verify(w, h) {
+                if hashes::pbkdf2::verify(w, hash_value(h)) {
                     bar.println(format!("{} hash cracked {} -> {}", star.green(), h, w));
                     found.fetch_add(1, Ordering::Relaxed);
                 }
@@ -645,7 +708,7 @@ pub fn run(hashes: &[&str], wordlist: &str, hash_type: &str, rule: bool) -> usiz
     if hash_type == "argon2" {
         parallel_crack(wordlist, rule, &bar, |w| {
             for h in hashes {
-                if hashes::argon2::verify(w, h) {
+                if hashes::argon2::verify(w, hash_value(h)) {
                     bar.println(format!("{} hash cracked {} -> {}", star.green(), h, w));
                     found.fetch_add(1, Ordering::Relaxed);
                 }

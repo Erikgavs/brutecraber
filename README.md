@@ -172,15 +172,15 @@ When falling back to CPU:
 
 ### Hex algorithms (GPU + CPU)
 
-| Algorithm | Hex | Base64 | Salted |
-|-----------|:---:|:------:|:------:|
-| MD5 | `md5` | `md5-base64` | `md5-salt` |
-| SHA1 | `sha1` | `sha1-base64` | `sha1-salt` |
-| SHA256 | `sha256` | `sha256-base64` | `sha256-salt` |
-| SHA512 | `sha512` | `sha512-base64` | `sha512-salt` |
-| SHA3-256 | `sha3-256` | `sha3-256-base64` | `sha3-256-salt` |
-| SHA3-512 | `sha3-512` | `sha3-512-base64` | `sha3-512-salt` |
-| NTLM | `ntlm` | — | — |
+| Algorithm | Hex | Base64 | Salt before password | Salt after password |
+|-----------|:---:|:------:|:--------------------:|:-------------------:|
+| MD5 | `md5` | `md5-base64` | `md5-salt` | `md5-salt-suffix` |
+| SHA1 | `sha1` | `sha1-base64` | `sha1-salt` | `sha1-salt-suffix` |
+| SHA256 | `sha256` | `sha256-base64` | `sha256-salt` | `sha256-salt-suffix` |
+| SHA512 | `sha512` | `sha512-base64` | `sha512-salt` | `sha512-salt-suffix` |
+| SHA3-256 | `sha3-256` | `sha3-256-base64` | `sha3-256-salt` | `sha3-256-salt-suffix` |
+| SHA3-512 | `sha3-512` | `sha3-512-base64` | `sha3-512-salt` | `sha3-512-salt-suffix` |
+| NTLM | `ntlm` | — | — | — |
 
 ### Wi-Fi hashes
 
@@ -199,8 +199,14 @@ The PMKID line contains the PMKID, AP and station MAC addresses, and the hex-enc
 | Scrypt | `scrypt` | Used in crypto wallets |
 | PBKDF2 | `pbkdf2` | PHC-formatted PBKDF2 hashes |
 
-> Salted hashes use the format `salt:hash` (one per line).
-> Bcrypt/Argon2/Scrypt/PBKDF2 include their own salt inside the hash string. WPA-PMKID records carry the ESSID and MAC addresses in the input line.
+### Hash input formats
+
+- Plain hashes use one digest per line. Records such as `username:hash` are accepted when `-t` is explicitly set; the last field is treated as the digest.
+- Auto-detection rejects colon-delimited records because `username:hash`, `salt:hash`, and `hash:salt` are ambiguous. Select a type with `-t`.
+- `*-salt` uses `salt:hash` and computes `hash(salt + candidate)`.
+- `*-salt-suffix` uses `hash:salt` and computes `hash(candidate + salt)`.
+- Base64 modes accept standard Base64 with or without trailing `=` padding. Specify the matching `*-base64` type with `-t`.
+- Bcrypt/Argon2/Scrypt/PBKDF2 include their own salt inside the hash string. WPA-PMKID records carry the ESSID and MAC addresses in the input line.
 
 ---
 

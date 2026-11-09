@@ -34,7 +34,7 @@ struct Args {
     #[arg(
         short = 't',
         default_value = "auto",
-        help = "Hash type: md5, md5-base64, md5-salt, sha1, sha1-base64, sha1-salt, sha256, sha256-base64, sha256-salt, sha512, sha512-base64, sha512-salt, sha3-256, sha3-256-base64, sha3-256-salt, sha3-512, sha3-512-base64, sha3-512-salt, bcrypt, ntlm, argon2, scrypt, pbkdf2"
+        help = "Hash type: md5, md5-base64, md5-salt, md5-salt-suffix, sha1, sha1-base64, sha1-salt, sha1-salt-suffix, sha256, sha256-base64, sha256-salt, sha256-salt-suffix, sha512, sha512-base64, sha512-salt, sha512-salt-suffix, sha3-256, sha3-256-base64, sha3-256-salt, sha3-256-salt-suffix, sha3-512, sha3-512-base64, sha3-512-salt, sha3-512-salt-suffix, bcrypt, ntlm, argon2, scrypt, pbkdf2"
     )]
     hash: String,
 
@@ -69,6 +69,10 @@ fn detect_hashes(hashes: &[String]) -> String {
         return detector::UNKNOWN_HASH_TYPE.to_owned();
     };
 
+    if hashes.iter().any(|hash| hash.contains(':')) {
+        return "colon-delimited input requires an explicit -t type".to_owned();
+    }
+
     let first_type = detector::detect(first_hash);
     if hashes
         .iter()
@@ -84,6 +88,10 @@ fn detect_hashes(hashes: &[String]) -> String {
 }
 
 fn auto_detect_hash_type(hashes: &[String]) -> anyhow::Result<&'static str> {
+    if hashes.iter().any(|hash| hash.contains(':')) {
+        anyhow::bail!("colon-delimited records require an explicit hash type with -t");
+    }
+
     let first_hash = hashes
         .first()
         .ok_or_else(|| anyhow::anyhow!("hash file contains no non-empty hashes"))?;
