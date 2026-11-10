@@ -1,5 +1,5 @@
 # Usage
-> This documentation applies to brutecraber v0.10.0
+> This documentation applies to brutecraber v0.10.1
 
 > This project is under active development
 

@@ -182,9 +182,16 @@ fn banner() {
     println!("     without prior consent is a violation of applicable laws. Use at your own risk.");
     println!();
     println!(
-        " {} MD5 · SHA1 · SHA256 · SHA512 · SHA3-256 · SHA3-512 · Bcrypt · NTLM · Argon2 · Scrypt · PBKDF2 · WPA-PMKID  {} hex · base64 · salted · PMKID",
-        "Supported:".truecolor(222, 74, 31),
-        "Modes:".truecolor(222, 74, 31)
+        " {} MD5 · SHA1 · SHA256 · SHA512 · SHA3-256 · SHA3-512 · Bcrypt · NTLM · Argon2 · Scrypt · PBKDF2-SHA256 · WPA-PMKID",
+        "Supported:".truecolor(222, 74, 31)
+    );
+    println!(
+        " {} hex · Base64 (padded/unpadded) · salted prefix/suffix · username:hash (-t required) · PMKID",
+        "Inputs:".truecolor(222, 74, 31)
+    );
+    println!(
+        " {} 32-character hex tries MD5/NTLM; 64/128-character hex tries SHA/SHA3; mixed files must be split.",
+        "Auto:".truecolor(222, 74, 31)
     );
     println!();
 }

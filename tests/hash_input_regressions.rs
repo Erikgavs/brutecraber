@@ -67,6 +67,16 @@ const MD5_PASSWORD: &str = "5f4dcc3b5aa765d61d8327deb882cf99";
 const NTLM_PASSWORD: &str = "8846f7eaee8fb117ad06bdd830b7586c";
 
 #[test]
+fn banner_reports_the_cargo_package_version() {
+    Command::cargo_bin("brutecraber")
+        .unwrap()
+        .arg("--version")
+        .assert()
+        .success()
+        .stdout(contains(concat!("v", env!("CARGO_PKG_VERSION"))));
+}
+
+#[test]
 fn auto_cracks_md5_32_hex_hash() {
     let inputs = TestInputs::new(
         format!("{MD5_PASSWORD}\n").as_bytes(),
