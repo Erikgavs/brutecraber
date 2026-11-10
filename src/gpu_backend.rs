@@ -28,6 +28,39 @@ pub fn supports(hash_type: &str) -> bool {
     GPU_SUPPORTED_HEX_TYPES.contains(&hash_type)
 }
 
+/// Maximum candidate byte length supported by the current single-block kernels.
+///
+/// These kernels manually pad one input block. MD5/SHA-1/SHA-256 reserve 9 of
+/// their 64 bytes for padding and the message length (max 55 input bytes);
+/// SHA-512 reserves 17 of 128 bytes (max 111). SHA3-256 and SHA3-512 have rates
+/// of 136 and 72 bytes, respectively, and reserve the final byte for padding.
+/// Dual modes use the smaller limit of their two kernels. NTLM's limit is for
+/// ASCII only: its kernel expands each input byte to UTF-16LE without decoding
+/// UTF-8 into Unicode code points.
+fn gpu_candidate_limit(hash_type: &str) -> Option<usize> {
+    match hash_type {
+        "md5" | "sha1" | "sha256" | "sha256/sha3-256" => Some(55),
+        "sha512" => Some(111),
+        "sha3-256" => Some(135),
+        "sha3-512" | "sha512/sha3-512" => Some(71),
+        "ntlm" => Some(27),
+        _ => None,
+    }
+}
+
+fn gpu_cpu_fallback_reason(hash_type: &str, wordlist: &str) -> Option<&'static str> {
+    // The CPU implementation correctly encodes Unicode NTLM candidates as UTF-16LE.
+    if hash_type == "ntlm" && wordlist.lines().any(|word| !word.is_ascii()) {
+        return Some("the NTLM GPU kernel only supports ASCII candidates");
+    }
+
+    let max_len = gpu_candidate_limit(hash_type)?;
+    wordlist
+        .lines()
+        .any(|word| word.len() > max_len)
+        .then_some("the wordlist contains candidates beyond the GPU kernel's single-block limit")
+}
+
 pub struct GpuBackend {
     device: Device,
     context: Context,
@@ -101,7 +134,7 @@ impl GpuBackend {
         hex_len: usize,
         digest_size: usize,
         algo_name: &str,
-    ) -> usize {
+    ) -> Result<Vec<(String, String)>, String> {
         // Parse target hashes from hex to bytes
         let target_bytes: Vec<Vec<u8>> = hashes
             .iter()
@@ -117,7 +150,7 @@ impl GpuBackend {
 
         if target_bytes.is_empty() {
             println!("{} No valid {} hex hashes found", "[!]".red(), algo_name);
-            return 0;
+            return Ok(Vec::new());
         }
 
         // Flatten targets for GPU upload (contiguous digest_size-byte blocks)
@@ -128,32 +161,17 @@ impl GpuBackend {
         let num_targets = target_bytes.len() as u32;
 
         // Build OpenCL program + kernel
-        let program = match Program::create_and_build_from_source(&self.context, kernel_source, "")
-        {
-            Ok(p) => p,
-            Err(e) => {
-                println!(
-                    "{} Failed to build {} OpenCL kernel: {e}",
-                    "[!]".red(),
-                    algo_name
-                );
-                return 0;
-            }
-        };
+        let program = Program::create_and_build_from_source(&self.context, kernel_source, "")
+            .map_err(|e| format!("Failed to build {algo_name} OpenCL kernel: {e}"))?;
 
-        let kernel = match Kernel::create(&program, kernel_fn_name) {
-            Ok(k) => k,
-            Err(e) => {
-                println!("{} Failed to create kernel: {e}", "[!]".red());
-                return 0;
-            }
-        };
+        let kernel = Kernel::create(&program, kernel_fn_name)
+            .map_err(|e| format!("Failed to create {algo_name} OpenCL kernel: {e}"))?;
 
         // Collect words from wordlist
         let words: Vec<&str> = wordlist.lines().collect();
         let total_words = words.len();
         if total_words == 0 {
-            return 0;
+            return Ok(Vec::new());
         }
 
         // Calculate batch size based on GPU VRAM
@@ -173,7 +191,9 @@ impl GpuBackend {
                 .progress_chars("=> "),
         );
 
-        let mut found = 0usize;
+        // Buffer matches until every batch succeeds. If a later batch fails, the
+        // caller can discard these partial results and rerun the full list on CPU.
+        let mut found = Vec::new();
         let start_time = Instant::now();
 
         // Process wordlist in VRAM-aware batches
@@ -215,19 +235,14 @@ impl GpuBackend {
                                     .iter()
                                     .map(|b| format!("{:02x}", b))
                                     .collect();
-                                bar.println(format!(
-                                    "{} hash cracked {} -> {}",
-                                    "[*]".green(),
-                                    hex,
-                                    batch[i]
-                                ));
-                                found += 1;
+                                found.push((hex, batch[i].to_owned()));
                             }
                         }
                     }
                 }
                 Err(e) => {
-                    bar.println(format!("{} GPU batch error: {e}", "[!]".red()));
+                    bar.finish();
+                    return Err(format!("{algo_name} GPU batch failed: {e}"));
                 }
             }
 
@@ -248,7 +263,7 @@ impl GpuBackend {
         }
 
         bar.finish();
-        found
+        Ok(found)
     }
 
     /// Generic GPU batch execution — kernel interface is the same for all algorithms.
@@ -471,10 +486,6 @@ impl CrackingBackend for GpuBackend {
         // Rules: expand wordlist on CPU, then dispatch to GPU
         let expanded_wordlist: String;
         let effective_wordlist = if rule {
-            println!(
-                " {} Applying rules on CPU, dispatching expanded wordlist to GPU...",
-                "[*]".green()
-            );
             expanded_wordlist = wordlist
                 .lines()
                 .flat_map(crate::rules::apply)
@@ -485,7 +496,21 @@ impl CrackingBackend for GpuBackend {
             wordlist
         };
 
-        match hash_type {
+        if let Some(reason) = gpu_cpu_fallback_reason(hash_type, effective_wordlist) {
+            // A kernel would silently skip unsupported candidates. Fall back for
+            // the whole list rather than mixing partial GPU and CPU results.
+            println!(" {} {reason}; falling back to CPU.\n", "[!]".yellow());
+            return CpuBackend.run(hashes, wordlist, hash_type, rule);
+        }
+
+        if rule {
+            println!(
+                " {} Applying rules on CPU, dispatching expanded wordlist to GPU...",
+                "[*]".green()
+            );
+        }
+
+        let gpu_result: Result<Vec<(String, String)>, String> = match hash_type {
             "md5" => self.crack_hash(
                 hashes,
                 effective_wordlist,
@@ -551,7 +576,7 @@ impl CrackingBackend for GpuBackend {
             ),
             "sha256/sha3-256" => {
                 println!(" {} Dual-mode: trying SHA256 on GPU...", "[*]".green());
-                let found_sha256 = self.crack_hash(
+                self.crack_hash(
                     hashes,
                     effective_wordlist,
                     SHA256_KERNEL_SOURCE,
@@ -559,22 +584,27 @@ impl CrackingBackend for GpuBackend {
                     64,
                     32,
                     "SHA256",
-                );
-                println!(" {} Dual-mode: trying SHA3-256 on GPU...", "[*]".green());
-                let found_sha3 = self.crack_hash(
-                    hashes,
-                    effective_wordlist,
-                    SHA3_256_KERNEL_SOURCE,
-                    "sha3_256_crack",
-                    64,
-                    32,
-                    "SHA3-256",
-                );
-                found_sha256 + found_sha3
+                )
+                .and_then(|mut found_sha256| {
+                    println!(" {} Dual-mode: trying SHA3-256 on GPU...", "[*]".green());
+                    self.crack_hash(
+                        hashes,
+                        effective_wordlist,
+                        SHA3_256_KERNEL_SOURCE,
+                        "sha3_256_crack",
+                        64,
+                        32,
+                        "SHA3-256",
+                    )
+                    .map(|mut found_sha3| {
+                        found_sha256.append(&mut found_sha3);
+                        found_sha256
+                    })
+                })
             }
             "sha512/sha3-512" => {
                 println!(" {} Dual-mode: trying SHA512 on GPU...", "[*]".green());
-                let found_sha512 = self.crack_hash(
+                self.crack_hash(
                     hashes,
                     effective_wordlist,
                     SHA512_KERNEL_SOURCE,
@@ -582,20 +612,43 @@ impl CrackingBackend for GpuBackend {
                     128,
                     64,
                     "SHA512",
-                );
-                println!(" {} Dual-mode: trying SHA3-512 on GPU...", "[*]".green());
-                let found_sha3 = self.crack_hash(
-                    hashes,
-                    effective_wordlist,
-                    SHA3_512_KERNEL_SOURCE,
-                    "sha3_512_crack",
-                    128,
-                    64,
-                    "SHA3-512",
-                );
-                found_sha512 + found_sha3
+                )
+                .and_then(|mut found_sha512| {
+                    println!(" {} Dual-mode: trying SHA3-512 on GPU...", "[*]".green());
+                    self.crack_hash(
+                        hashes,
+                        effective_wordlist,
+                        SHA3_512_KERNEL_SOURCE,
+                        "sha3_512_crack",
+                        128,
+                        64,
+                        "SHA3-512",
+                    )
+                    .map(|mut found_sha3| {
+                        found_sha512.append(&mut found_sha3);
+                        found_sha512
+                    })
+                })
             }
-            _ => CpuBackend.run(hashes, wordlist, hash_type, rule),
+            _ => return CpuBackend.run(hashes, wordlist, hash_type, rule),
+        };
+
+        match gpu_result {
+            Ok(matches) => {
+                let found = matches.len();
+                for (hash, word) in matches {
+                    println!("{} hash cracked {} -> {}", "[*]".green(), hash, word);
+                }
+                found
+            }
+            Err(error) => {
+                // Do not report partial GPU results; CPU retries the original input.
+                println!(
+                    " {} GPU failed ({error}); falling back to CPU.\n",
+                    "[!]".yellow()
+                );
+                CpuBackend.run(hashes, wordlist, hash_type, rule)
+            }
         }
     }
 }
@@ -603,7 +656,8 @@ impl CrackingBackend for GpuBackend {
 // ============================================================================
 //  GPU test suite
 //
-//  All tests are #[ignore] so CI (no GPU hardware) passes without issues.
+//  GPU hardware tests are #[ignore] so CI can run without an OpenCL device.
+//  Fallback-policy tests below do not require GPU hardware.
 //  Run manually on a GPU-equipped machine:
 //      cargo test --features gpu -- --ignored
 // ============================================================================
@@ -612,6 +666,42 @@ mod tests {
     use super::*;
     use crate::backend::CrackingBackend;
     use crate::cpu_backend::CpuBackend;
+
+    #[test]
+    fn gpu_candidate_limits_match_single_block_kernels() {
+        let limits = [
+            ("md5", 55),
+            ("sha1", 55),
+            ("sha256", 55),
+            ("sha256/sha3-256", 55),
+            ("sha512", 111),
+            ("sha3-256", 135),
+            ("sha3-512", 71),
+            ("sha512/sha3-512", 71),
+            ("ntlm", 27),
+        ];
+
+        for (hash_type, max_len) in limits {
+            let supported_word = "x".repeat(max_len);
+            let overlong_word = "x".repeat(max_len + 1);
+
+            assert_eq!(
+                gpu_cpu_fallback_reason(hash_type, &supported_word),
+                None,
+                "{hash_type} should accept {max_len}-byte candidates on GPU"
+            );
+            assert!(
+                gpu_cpu_fallback_reason(hash_type, &overlong_word).is_some(),
+                "{hash_type} should fall back for candidates longer than {max_len} bytes"
+            );
+        }
+    }
+
+    #[test]
+    fn gpu_ntlm_falls_back_for_non_ascii_candidates() {
+        assert!(gpu_cpu_fallback_reason("ntlm", "pässword").is_some());
+        assert_eq!(gpu_cpu_fallback_reason("ntlm", "password"), None);
+    }
 
     fn init_gpu() -> GpuBackend {
         GpuBackend::new().expect("GPU required — run with: cargo test --features gpu -- --ignored")

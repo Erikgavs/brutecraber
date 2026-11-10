@@ -56,6 +56,10 @@ fn parse_pmkid_line(hash_line: &str) -> Option<([u8; 16], [u8; 6], [u8; 6], Vec<
     Some((pmkid, mac_ap, mac_sta, essid))
 }
 
+pub fn is_valid_pmkid_line(hash_line: &str) -> bool {
+    parse_pmkid_line(hash_line).is_some()
+}
+
 pub fn verify_pmkid_line(passphrase: &str, hash_line: &str) -> bool {
     // WPA passphrases must be between 8 and 63 bytes.
     if !(8..=63).contains(&passphrase.len()) {
@@ -152,15 +156,33 @@ mod tests {
         let valid_ssid = "74657374";
         let invalid_lines = [
             format!("WPA*01*00*{valid_ap}*{valid_sta}*{valid_ssid}***"),
-            format!("WPA*01*{}*{valid_ap}*{valid_sta}*{valid_ssid}***", "gg".repeat(16)),
-            format!("WPA*01*{}*0011223344*{valid_sta}*{valid_ssid}***", "00".repeat(16)),
-            format!("WPA*01*{}*00112233445g*{valid_sta}*{valid_ssid}***", "00".repeat(16)),
-            format!("WPA*01*{}*{valid_ap}*aabbccddeeff00*{valid_ssid}***", "00".repeat(16)),
-            format!("WPA*01*{}*{valid_ap}*aabbccddeefg*{valid_ssid}***", "00".repeat(16)),
+            format!(
+                "WPA*01*{}*{valid_ap}*{valid_sta}*{valid_ssid}***",
+                "gg".repeat(16)
+            ),
+            format!(
+                "WPA*01*{}*0011223344*{valid_sta}*{valid_ssid}***",
+                "00".repeat(16)
+            ),
+            format!(
+                "WPA*01*{}*00112233445g*{valid_sta}*{valid_ssid}***",
+                "00".repeat(16)
+            ),
+            format!(
+                "WPA*01*{}*{valid_ap}*aabbccddeeff00*{valid_ssid}***",
+                "00".repeat(16)
+            ),
+            format!(
+                "WPA*01*{}*{valid_ap}*aabbccddeefg*{valid_ssid}***",
+                "00".repeat(16)
+            ),
         ];
 
         for line in invalid_lines {
-            assert!(parse_pmkid_line(&line).is_none(), "accepted invalid line: {line}");
+            assert!(
+                parse_pmkid_line(&line).is_none(),
+                "accepted invalid line: {line}"
+            );
         }
     }
 

@@ -11,6 +11,18 @@ Thanks for your interest in contributing! This guide will help you get started.
 5. Run checks: `cargo test && cargo clippy`
 6. Push and open a Pull Request
 
+## Test suites
+
+The regular Scrypt tests use low-cost PHC fixtures (`ln=10`) so `cargo test` can check verification quickly. These fixtures are for tests only and are not suitable for production password storage.
+
+One round-trip test uses the default, slower Scrypt cost and is ignored by default. Run it explicitly with:
+
+```bash
+cargo test --locked hashes::scrypt::tests::slow_default_cost_scrypt_round_trip -- --ignored --exact
+```
+
+This slow check can take a minute or more depending on the machine.
+
 ## Project Structure
 
 ```

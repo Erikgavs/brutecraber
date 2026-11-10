@@ -1,5 +1,9 @@
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 
+pub fn is_valid_hash_format(hash: &str) -> bool {
+    hash.starts_with("$argon2") && PasswordHash::new(hash).is_ok()
+}
+
 pub fn verify(word: &str, hash: &str) -> bool {
     match PasswordHash::new(hash) {
         Ok(parsed_hash) => Argon2::default()

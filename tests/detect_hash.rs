@@ -6,12 +6,12 @@ fn bin() -> Command {
 }
 
 #[test]
-fn detects_md5() {
+fn detects_32_hex_hash_as_md5_or_ntlm_ambiguity() {
     bin()
         .args(["--detect-hash", "tests/hashes/md5/hashes.txt"])
         .assert()
         .success()
-        .stdout(contains("hash detected: md5"));
+        .stdout(contains("hash detected: md5/ntlm (ambiguous)"));
 }
 
 #[test]

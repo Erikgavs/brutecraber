@@ -25,3 +25,4 @@ target/
 .env
 AGENTS.md
 /ROADMAP.md
+.future-sha512-crypt.md

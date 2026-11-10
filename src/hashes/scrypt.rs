@@ -3,6 +3,10 @@ use scrypt::{
     password_hash::{PasswordHash, PasswordVerifier},
 };
 
+pub fn is_valid_hash_format(hash: &str) -> bool {
+    hash.starts_with("$scrypt$") && PasswordHash::new(hash).is_ok()
+}
+
 pub fn verify(word: &str, hash: &str) -> bool {
     match PasswordHash::new(hash) {
         Ok(parsed_hash) => Scrypt
@@ -21,7 +25,17 @@ mod tests {
         password_hash::{PasswordHasher, SaltString},
     };
 
-    fn generate_hash(password: &str, salt: &str) -> String {
+    const LOW_COST_FIXTURES: &str = include_str!("../../tests/hashes/scrypt/hashes.txt");
+
+    fn fixture_hash(index: usize) -> &'static str {
+        LOW_COST_FIXTURES
+            .lines()
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .nth(index)
+            .expect("missing Scrypt test fixture")
+    }
+
+    fn generate_default_cost_hash(password: &str, salt: &str) -> String {
         let salt = SaltString::from_b64(salt).unwrap();
         Scrypt
             .hash_password(password.as_bytes(), &salt)
@@ -31,21 +45,18 @@ mod tests {
 
     #[test]
     fn test_verify_valid() {
-        let hash = generate_hash("password", "c29tZXNhbHQ");
-        assert!(verify("password", &hash));
+        assert!(verify("password", fixture_hash(0)));
     }
 
     #[test]
     fn test_verify_invalid() {
-        let hash = generate_hash("password", "c29tZXNhbHQ");
-        assert!(!verify("wrongpassword", &hash));
+        assert!(!verify("wrongpassword", fixture_hash(0)));
     }
 
     #[test]
     fn test_verify_admin() {
-        let hash = generate_hash("admin", "YW5vdGhlcnNhbHQ");
-        assert!(verify("admin", &hash));
-        assert!(!verify("administrator", &hash));
+        assert!(verify("admin", fixture_hash(1)));
+        assert!(!verify("administrator", fixture_hash(1)));
     }
 
     #[test]
@@ -54,15 +65,10 @@ mod tests {
         assert!(!verify("password", "$scrypt$invalid"));
     }
 
-    /// Helper to (re)generate the fixture file `tests/hashes/scrypt/hashes.txt`.
-    /// Run with: `cargo test scrypt::tests::print_fixture_hashes -- --ignored --nocapture`
     #[test]
-    #[ignore]
-    fn print_fixture_hashes() {
-        let words = ["password", "admin", "123456"];
-        let salts = ["c29tZXNhbHRhYmM", "YW5vdGhlcnNhbHQ", "dGhpcmRzYWx0YWI"];
-        for (w, s) in words.iter().zip(salts.iter()) {
-            println!("{}", generate_hash(w, s));
-        }
+    #[ignore = "slow default-cost Scrypt check; run explicitly when needed"]
+    fn slow_default_cost_scrypt_round_trip() {
+        let hash = generate_default_cost_hash("password", "c29tZXNhbHQ");
+        assert!(verify("password", &hash));
     }
 }

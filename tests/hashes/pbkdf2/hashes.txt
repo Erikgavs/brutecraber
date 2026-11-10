@@ -1,4 +1,4 @@
-# PBKDF2 test hashes (password,salt,base64)
-password,c29tZXNhbHQ
-admin,YW5vdGhlcnNhbHQ
-123456,dGhpcmRzYWx0YWI
+# Low-cost integration-test vectors (10,000 rounds); not suitable for production password storage.
+$pbkdf2-sha256$i=10000$YnJ1dGVjcmFiZXItcGJrZGYyLTE$AThW3fgu7daT1O5SgcXM1JY4Xf5/9i9CvIIb+XBDJs8
+$pbkdf2-sha256$i=10000$YnJ1dGVjcmFiZXItcGJrZGYyLTI$rmkaFzlm6j1JlLK28ZZRehJjCM9cdA+FGSFZTIIvpec
+$pbkdf2-sha256$i=10000$YnJ1dGVjcmFiZXItcGJrZGYyLTM$wwzxTxoIp7YmuLH9MKUle1rrBJUHqGFXID2fFjGGfHo
