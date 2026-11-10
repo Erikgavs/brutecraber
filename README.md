@@ -15,7 +15,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-DE4A1F?logo=rust)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.9.0-orange)](https://github.com/erikgavs/brutecraber/releases)
+[![Latest release](https://img.shields.io/github/v/release/Erikgavs/brutecraber?label=version)](https://github.com/Erikgavs/brutecraber/releases/latest)
 [![crates.io](https://img.shields.io/crates/v/brutecraber.svg)](https://crates.io/crates/brutecraber)
 
 Crack hashes using wordlist-based dictionary attacks. Runs on GPU via OpenCL when available, with automatic fallback to a parallel CPU backend powered by `rayon`.
@@ -38,7 +38,7 @@ Crack hashes using wordlist-based dictionary attacks. Runs on GPU via OpenCL whe
 
 ## Performance
 
-BruteCraber v0.9.0 ships with two backends:
+BruteCraber ships with two backends:
 
 - **GPU (OpenCL)** — kernels for MD5, SHA1, SHA256, SHA512, SHA3-256, SHA3-512 and NTLM. Used automatically when a GPU is detected.
 - **CPU (Rayon)** — SIMD-accelerated, chunked parallel processing. Used when GPU isn't available or for algorithms that can't be parallelized on GPU (Bcrypt, Argon2, Scrypt, PBKDF2, WPA-PMKID).
