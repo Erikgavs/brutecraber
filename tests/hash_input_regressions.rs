@@ -81,6 +81,18 @@ fn auto_cracks_md5_32_hex_hash() {
 }
 
 #[test]
+fn cli_help_documents_ambiguous_and_explicit_hash_formats() {
+    Command::cargo_bin("brutecraber")
+        .unwrap()
+        .arg("--help")
+        .assert()
+        .success()
+        .stdout(contains("MD5/NTLM"))
+        .stdout(contains("colon-delimited"))
+        .stdout(contains("md5-salt-suffix"));
+}
+
+#[test]
 fn explicit_type_cracks_all_raw_hex_algorithms() {
     let cases = [
         ("md5", MD5_PASSWORD),

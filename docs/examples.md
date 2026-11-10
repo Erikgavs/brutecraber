@@ -5,7 +5,7 @@
 
 ## Basic usage with auto-detection
 
-The tool detects the hash type from the input records. It rejects mixed or colon-delimited records in auto mode rather than guessing or partially cracking them.
+The tool detects the hash type from the input records. It rejects mixed or colon-delimited records in auto mode rather than guessing or partially cracking them. A 32-character hex digest is ambiguous between MD5 and NTLM, so auto mode tries both. 64-character and 128-character digests are also tried as SHA/SHA3 pairs.
 
 ```bash
 ./brutecraber -f hashes.txt -w wordlist.txt
@@ -55,6 +55,14 @@ Bcrypt hashes are verified directly, not compared by hash output.
 ./brutecraber -f ntlm_hashes.txt -w rockyou.txt -t ntlm
 ```
 
+## PBKDF2-SHA256 (PHC format)
+
+PBKDF2 auto-detection supports PHC records beginning with `$pbkdf2-sha256$`.
+
+```bash
+./brutecraber -f pbkdf2_hashes.txt -w wordlist.txt
+```
+
 ## Base64 encoded hashes
 
 If your hashes are Base64 encoded, use the `-base64` suffix. Standard Base64 with or without trailing `=` padding is accepted; specify the type explicitly.
@@ -62,6 +70,10 @@ If your hashes are Base64 encoded, use the `-base64` suffix. Standard Base64 wit
 ```bash
 ./brutecraber -f base64_hashes.txt -w rockyou.txt -t sha256-base64
 ```
+
+## GPU fallback
+
+GPU kernels are used only for supported raw-hex types. Base64, salted and memory-hard types use CPU. OpenCL kernels support only single-block candidates: MD5/SHA-1/SHA-256 up to 55 bytes, SHA-512 up to 111, SHA3-256 up to 135, SHA3-512 up to 71, and NTLM up to 27 ASCII characters. Longer candidates and non-ASCII NTLM candidates fall back to CPU; GPU execution errors also retry on CPU.
 
 ## Hash file formats
 
@@ -100,6 +112,8 @@ Use the matching `-salt-suffix` type. This mode computes `hash(candidate + salt)
 ```
 9af87eabc21c318d6839aea39d5156bb:x7k2
 ```
+
+Raw SHA-512 (`sha512`) is not Unix SHA-512-crypt (`$6$`). SHA-512-crypt and other `crypt` formats are not currently supported.
 
 ### Bcrypt
 

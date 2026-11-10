@@ -25,6 +25,10 @@ By default, the tool will display some help for the user
 | `-w` | Path to the wordlist file |
 | `-t` | Hash type (default: `auto`) |
 | `-r` / `--rules` | Enable rule-based transformations |
+| `--cpu` | Force CPU backend |
+| `--benchmark` | Run CPU/GPU benchmarks |
+| `--detect-hash <FILE>` | Detect hash types in a hash file |
+| `-j <N>` | Set the number of worker threads |
 | `-V` | Show current version |
 
 ## Supported hash types
@@ -59,7 +63,7 @@ By default, the tool will display some help for the user
 | NTLM | `ntlm` |
 | Argon2 | `argon2` |
 | Scrypt | `scrypt` |
-| PBKDF2 | `pbkdf2` |
+| PBKDF2-SHA256 PHC | `pbkdf2` |
 
 ## Rules
 
@@ -101,3 +105,9 @@ For `*-salt-suffix`, use `hash:salt`; Brutecraber computes `hash(candidate + sal
 ```
 
 Username-prefixed raw hashes (`username:hash`) are accepted when `-t` explicitly selects the hash type. Auto-detection rejects colon-delimited records because username/hash and salted formats are ambiguous. Base64 modes accept padded and unpadded standard Base64, but also require an explicit `-t` type. Invalid and duplicate hash records are reported and excluded; the cracked total counts unique target hashes.
+
+Hashes with 32 hex characters are ambiguous between MD5 and NTLM; auto mode tries both. Hashes with 64 or 128 characters are tried as SHA-2/SHA-3 pairs.
+
+Raw SHA-512 (`sha512`) is not Unix SHA-512-crypt (`$6$`); SHA-512-crypt and other `crypt` formats are not supported.
+
+GPU kernels are single-block implementations. Maximum candidate lengths are 55 bytes for MD5/SHA-1/SHA-256, 111 for SHA-512, 135 for SHA3-256, 71 for SHA3-512 and 27 ASCII characters for NTLM. Overlong candidates, non-ASCII NTLM candidates and GPU execution failures fall back to CPU.

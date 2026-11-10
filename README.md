@@ -123,6 +123,12 @@ If OpenCL or a GPU isn't available, BruteCraber automatically falls back to the 
 # Crack salted hashes
 ./brutecraber -f salted.txt -w rockyou.txt -t md5-salt
 
+# Crack hashes stored before a suffix salt (hash:salt)
+./brutecraber -f salted_suffix.txt -w rockyou.txt -t md5-salt-suffix
+
+# Crack a username:hash file (select the algorithm explicitly)
+./brutecraber -f user_hashes.txt -w rockyou.txt -t md5
+
 # Crack bcrypt hashes (CPU-only algorithm)
 ./brutecraber -f bcrypt_hashes.txt -w rockyou.txt -t bcrypt
 
@@ -146,6 +152,8 @@ If OpenCL or a GPU isn't available, BruteCraber automatically falls back to the 
 | `-r` / `--rules` | Enable rule-based transformations | `false` |
 | `--cpu` | Force CPU backend (skip GPU) | `false` |
 | `--benchmark` | Run benchmark mode (measures H/s) | `false` |
+| `--detect-hash <FILE>` | Detect the type(s) represented in a hash file | — |
+| `-j <N>` | Number of worker threads | Rayon default |
 | `-h` | Show help | — |
 | `-V` | Show version | — |
 
@@ -170,7 +178,7 @@ When falling back to CPU:
 
 ## Supported Hashes
 
-### Hex algorithms (GPU + CPU)
+### Hash algorithms and encodings
 
 | Algorithm | Hex | Base64 | Salt before password | Salt after password |
 |-----------|:---:|:------:|:--------------------:|:-------------------:|
@@ -181,6 +189,10 @@ When falling back to CPU:
 | SHA3-256 | `sha3-256` | `sha3-256-base64` | `sha3-256-salt` | `sha3-256-salt-suffix` |
 | SHA3-512 | `sha3-512` | `sha3-512-base64` | `sha3-512-salt` | `sha3-512-salt-suffix` |
 | NTLM | `ntlm` | — | — | — |
+
+Raw hex types use GPU when supported and available. Base64, salted modes, and memory-hard algorithms run on CPU. Current OpenCL kernels accept up to 55 bytes for MD5/SHA-1/SHA-256, 111 for SHA-512, 135 for SHA3-256, 71 for SHA3-512, and 27 ASCII characters for NTLM. Longer candidates (or non-ASCII NTLM candidates) and GPU execution errors fall back to CPU.
+
+Hashes with 32 hex characters are ambiguous between MD5 and NTLM. Auto mode tries both; `--detect-hash` reports the ambiguity. SHA-256/SHA3-256 and SHA-512/SHA3-512 also share digest lengths, so auto mode tries both CPU implementations.
 
 ### Wi-Fi hashes
 
@@ -197,7 +209,7 @@ The PMKID line contains the PMKID, AP and station MAC addresses, and the hex-enc
 | Bcrypt | `bcrypt` | Salt embedded in hash (`$2a$`, `$2b$`, `$2y$`) |
 | Argon2 | `argon2` | Modern memory-hard KDF |
 | Scrypt | `scrypt` | Used in crypto wallets |
-| PBKDF2 | `pbkdf2` | PHC-formatted PBKDF2 hashes |
+| PBKDF2-SHA256 | `pbkdf2` | PHC format beginning with `$pbkdf2-sha256$` |
 
 ### Hash input formats
 
@@ -208,7 +220,9 @@ The PMKID line contains the PMKID, AP and station MAC addresses, and the hex-enc
 - `*-salt` uses `salt:hash` and computes `hash(salt + candidate)`.
 - `*-salt-suffix` uses `hash:salt` and computes `hash(candidate + salt)`.
 - Base64 modes accept standard Base64 with or without trailing `=` padding. Specify the matching `*-base64` type with `-t`.
+- Wordlists must be valid UTF-8; invalid byte sequences are rejected rather than silently replaced.
 - Invalid and duplicate hash records are reported and excluded from the final total. Cracked totals count unique target hashes, not repeated candidate matches.
+- `sha512` means raw SHA-512. Unix SHA-512-crypt hashes (`$6$`) and other `crypt` formats are not currently supported.
 - Bcrypt/Argon2/Scrypt/PBKDF2 include their own salt inside the hash string. WPA-PMKID records carry the ESSID and MAC addresses in the input line.
 
 ---

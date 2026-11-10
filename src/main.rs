@@ -35,7 +35,7 @@ struct Args {
     #[arg(
         short = 't',
         default_value = "auto",
-        help = "Hash type: md5, md5-base64, md5-salt, md5-salt-suffix, sha1, sha1-base64, sha1-salt, sha1-salt-suffix, sha256, sha256-base64, sha256-salt, sha256-salt-suffix, sha512, sha512-base64, sha512-salt, sha512-salt-suffix, sha3-256, sha3-256-base64, sha3-256-salt, sha3-256-salt-suffix, sha3-512, sha3-512-base64, sha3-512-salt, sha3-512-salt-suffix, bcrypt, ntlm, argon2, scrypt, pbkdf2"
+        help = "Hash type (default auto; 32 hex may be MD5/NTLM; Base64 and colon-delimited records require -t). Supported: md5, md5-base64, md5-salt, md5-salt-suffix, sha1, sha1-base64, sha1-salt, sha1-salt-suffix, sha256, sha256-base64, sha256-salt, sha256-salt-suffix, sha512, sha512-base64, sha512-salt, sha512-salt-suffix, sha3-256, sha3-256-base64, sha3-256-salt, sha3-256-salt-suffix, sha3-512, sha3-512-base64, sha3-512-salt, sha3-512-salt-suffix, bcrypt, ntlm, argon2, scrypt, pbkdf2, wpa-pmkid"
     )]
     hash: String,
 
@@ -48,7 +48,10 @@ struct Args {
     #[arg(long = "cpu", default_value_t = false, help = "Force CPU backend")]
     cpu: bool,
 
-    #[arg(long = "detect-hash", help = "Detect hash type in your hash file")]
+    #[arg(
+        long = "detect-hash",
+        help = "Detect hash type(s); colon-delimited records require an explicit -t type"
+    )]
     detect_hash: Option<String>,
 
     #[arg(short = 'j', help = "Number of threads used in cracking")]
